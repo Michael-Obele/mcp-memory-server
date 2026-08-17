@@ -1,0 +1,7 @@
+node_modules
+dashboard/build
+dashboard/node_modules
+.git
+.env
+*.log
+.fallow
