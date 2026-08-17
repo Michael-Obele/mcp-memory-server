@@ -1,0 +1,19 @@
+{
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "memory-token",
+      "description": "Memory MCP Bearer Token (from .env MCP_BEARER_TOKEN)",
+      "password": true
+    }
+  ],
+  "servers": {
+    "rem": {
+      "type": "http",
+      "url": "http://localhost:8080/mcp",
+      "headers": {
+        "Authorization": "Bearer ${input:memory-token}"
+      }
+    }
+  }
+}
