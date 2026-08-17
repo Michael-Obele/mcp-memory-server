@@ -1,19 +1,32 @@
 {
-  "name": "mcp-memory-server",
-  "module": "index.ts",
+  "name": "memory-server",
+  "module": "src/index.ts",
   "type": "module",
   "private": true,
-  "devDependencies": {
-    "@types/bun": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
+  "workspaces": [
+    "packages/*",
+    "dashboard"
+  ],
+  "scripts": {
+    "dev": "bun --hot src/index.ts",
+    "start": "bun run src/index.ts",
+    "db:schema": "bun run scripts/db-schema.ts",
+    "seed": "bun run scripts/seed.ts",
+    "smoke": "bun run scripts/smoke.ts",
+    "check": "tsc --noEmit"
   },
   "dependencies": {
+    "@memory/shared": "workspace:*",
     "@neondatabase/serverless": "^1.1.0",
     "@tmcp/adapter-valibot": "^0.1.6",
     "@tmcp/transport-http": "^0.9.0",
     "tmcp": "^1.20.0",
     "valibot": "^1.4.2"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
   }
 }
