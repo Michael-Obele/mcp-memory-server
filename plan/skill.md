@@ -165,9 +165,21 @@ echo "Done. Restart your editor to pick up the skill."
 
 ## Publishing (follow-up)
 
-- [skills.sh](https://skills.sh) — the open skill registry (Zed's `find-skills` installs from it)
+- [skills.sh](https://skills.sh) — the open skill registry (Zed's `find-skills` installs from it). Skills are discovered from GitHub repos (`npx skills add Michael-Obele/sepia` finds `skills/sepia/`) or from a direct `SKILL.md` URL (`npx skills add https://sepia.fly.dev/skill`).
 - Anthropic's `anthropics/skills` repo accepts community contributions
 - The skill + server together make a strong "MCP server with a skill" package — the pattern Creed and others use (server sends the contract; skill makes it explicit)
+
+## HTTP endpoints (served by the server, no repo clone needed)
+
+The server serves the skill + installer over HTTP (public, no auth — static docs):
+
+| Endpoint | Serves | Used by |
+| -------- | ------ | ------- |
+| `GET /skill` | `skills/sepia/SKILL.md` (text/markdown) | `npx skills add https://sepia.fly.dev/skill` |
+| `GET /skill/references/tools.md` | `skills/sepia/references/tools.md` | remote installer |
+| `GET /install` | `scripts/remote-install.sh` (shell script) | `curl -fsSL https://sepia.fly.dev/install \| bash` |
+
+The remote installer (`scripts/remote-install.sh`) fetches `SKILL.md` + `references/tools.md` from the server and installs into every editor skill dir it finds (`~/.agents/skills`, `.cursor/skills`, `.claude/skills`, `.codex/skills`, `.opencode/skills`). Idempotent — re-running overwrites in place.
 
 ## Acceptance criteria
 
@@ -175,5 +187,7 @@ echo "Done. Restart your editor to pick up the skill."
 - [ ] Fresh Zed session: same result via the skill catalog
 - [ ] `install-skill.sh` is idempotent (re-running doesn't duplicate)
 - [ ] `references/tools.md` matches `packages/shared/src/schemas.ts` (via `bun run gen:skill-ref`, checked in CI)
+- [ ] `curl -fsSL https://sepia.fly.dev/install | bash` installs the skill into a fresh editor dir
+- [ ] `npx skills add Michael-Obele/sepia --list` discovers the `sepia` skill
 
 [Back to Plan](./README.md) · [Dashboard spec](./dashboard.md)

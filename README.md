@@ -248,11 +248,34 @@ All connect from the **provider's cloud**, so the server must be publicly reacha
 
 ### Install the skill
 
+The skill is served over HTTP from the same server as the MCP endpoint, so you
+can install it without cloning the repo:
+
+```bash
+# One-liner — fetches SKILL.md + references from the server and installs
+# into every editor skill dir it finds (~/.agents, .cursor, .claude, .codex, .opencode)
+curl -fsSL https://sepia.fly.dev/install | bash
+```
+
+Or via the [skills.sh](https://skills.sh) CLI (open agent skills ecosystem):
+
+```bash
+# From the GitHub repo (discovers skills/sepia/)
+npx skills add Michael-Obele/sepia
+
+# Or directly from the server's SKILL.md URL
+npx skills add https://sepia.fly.dev/skill
+```
+
+If you have the repo cloned, the local installer works too:
+
 ```bash
 bun run scripts/install-skill.sh   # detects ~/.agents/skills, .cursor/skills, .claude/skills, .codex/skills
 ```
 
-Restart your editor to pick it up. Claude Code users can also invoke it on demand with `/memory`.
+Restart your editor to pick it up. Claude Code users can also invoke it on demand with `/sepia`.
+
+[![skills.sh](https://skills.sh/b/Michael-Obele/sepia)](https://skills.sh/Michael-Obele/sepia)
 
 ## Roadmap
 

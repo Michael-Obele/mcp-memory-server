@@ -41,6 +41,22 @@ const transport = new HttpTransport(server, { path: "/mcp" });
 
 const PORT = Number(process.env.PORT ?? 8080);
 
+// ── Skill + installer endpoints ────────────────────────────────────────────
+// The bundled Agent Skill (skills/sepia/) is served over HTTP so clients can
+// install it without cloning the repo:
+//   - GET /skill                    → SKILL.md (works with `npx skills add <url>`)
+//   - GET /skill/references/tools.md → per-tool reference
+//   - GET /install                  → remote installer script (curl | bash)
+const SKILL_DIR = new URL("../skills/sepia/", import.meta.url);
+
+function serveSkillFile(relPath: string, contentType: string) {
+  const file = Bun.file(new URL(relPath, SKILL_DIR));
+  if (!file.exists()) return new Response("Not Found", { status: 404 });
+  return new Response(file, {
+    headers: { "content-type": contentType },
+  });
+}
+
 Bun.serve({
   port: PORT,
   async fetch(request) {
@@ -58,10 +74,32 @@ Bun.serve({
         version: "1.0.0",
         mcp: "/mcp",
         health: "/healthz",
+        skill: "/skill",
+        install: "/install",
         auth: authEnabled()
           ? "bearer-token"
           : "dev-mode (MCP_BEARER_TOKEN not set)",
         tools: 7,
+      });
+    }
+
+    // Skill + installer are public (no auth) — they're static docs.
+    if (url.pathname === "/skill") {
+      return serveSkillFile("SKILL.md", "text/markdown; charset=utf-8");
+    }
+    if (url.pathname === "/skill/references/tools.md") {
+      return serveSkillFile(
+        "references/tools.md",
+        "text/markdown; charset=utf-8",
+      );
+    }
+    if (url.pathname === "/install") {
+      const script = Bun.file(
+        new URL("../scripts/remote-install.sh", import.meta.url),
+      );
+      if (!script.exists()) return new Response("Not Found", { status: 404 });
+      return new Response(script, {
+        headers: { "content-type": "text/x-shellscript; charset=utf-8" },
       });
     }
 
