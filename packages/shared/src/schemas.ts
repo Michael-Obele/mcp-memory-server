@@ -74,12 +74,13 @@ export const MemoryInput = v.object({
   metadata: v.optional(metadataSchema, {}),
 });
 
-/** Memory update — content/type/importance/metadata; entity_ids REPLACES the link set. */
+/** Memory update — content/type/importance/metadata/archived; entity_ids REPLACES the link set. */
 export const MemoryUpdateInput = v.object({
   content: v.optional(v.pipe(v.string(), v.minLength(1), v.maxLength(4000))),
   type: v.optional(v.picklist(MEMORY_TYPES)),
   importance: v.optional(importanceSchema),
   metadata: v.optional(metadataSchema),
+  archived: v.optional(v.boolean()),
   entity_ids: v.optional(
     v.pipe(v.array(uuidSchema), v.maxLength(MAX_ENTITY_LINKS)),
   ),
@@ -87,7 +88,8 @@ export const MemoryUpdateInput = v.object({
 
 /** Unified search input. */
 export const SearchInput = v.object({
-  q: v.pipe(v.string(), v.minLength(1), v.maxLength(200)),
+  // Empty q is allowed — it returns recent items (see search tool docs).
+  q: v.pipe(v.string(), v.maxLength(200)),
   namespace: v.optional(v.string()),
   type: v.optional(v.picklist(MEMORY_TYPES)),
   limit: v.optional(

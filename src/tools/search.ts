@@ -2,7 +2,7 @@ import type { McpServer } from "tmcp";
 import * as v from "valibot";
 import { SearchToolInput } from "@sepia/shared";
 import { db } from "../db.ts";
-import { search } from "../lib/search.ts";
+import { search } from "@sepia/shared";
 import { safe } from "./util.ts";
 
 export function registerSearchTools(server: McpServer<any, any>) {

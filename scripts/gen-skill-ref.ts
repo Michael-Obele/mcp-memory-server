@@ -70,7 +70,7 @@ const sections: Record<string, string[]> = {
     `- \`query\`: filters type? / namespace? (default "${DEFAULT_NAMESPACE}") / importance_min? (0-1) / archived? (default false); order importance DESC, updated_at DESC; limit default 20, max ${QUERY_LIMIT_MAX}`,
   ],
   search: [
-    "- `q` (string, 1-200, required) — case-insensitive substring match over `memories.content`, `entities.name`, `entities.summary`",
+    "- `q` (string, 0-200, required) — case-insensitive substring match over `memories.content`, `entities.name`, `entities.summary`; empty string returns recent items",
     "- `namespace`? (string) — scope the search",
     `- \`type\`? (${MEMORY_TYPES.join("|")}) — filter memories by type`,
     `- \`limit\`? (1-${SEARCH_LIMIT_MAX}, default 10)`,

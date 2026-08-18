@@ -43,7 +43,7 @@ Actions: `create` | `get` | `update` | `delete` | `query`
 
 ## search
 
-- `q` (string, 1-200, required) — case-insensitive substring match over `memories.content`, `entities.name`, `entities.summary`
+- `q` (string, 0-200, required) — case-insensitive substring match over `memories.content`, `entities.name`, `entities.summary`; empty string returns recent items
 - `namespace`? (string) — scope the search
 - `type`? (fact|observation|preference|instruction) — filter memories by type
 - `limit`? (1-25, default 10)

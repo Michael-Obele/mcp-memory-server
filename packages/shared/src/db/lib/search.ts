@@ -1,5 +1,7 @@
-import type { Db } from "../db.ts";
-import { SEARCH_LIMIT_MAX } from "@sepia/shared";
+import type { Db } from "../client.ts";
+import { SEARCH_LIMIT_MAX } from "../../types.ts";
+import { desc, eq, getTableColumns, sql, type SQL } from "drizzle-orm";
+import { entities, memories, namespaces } from "../schema.ts";
 
 export interface SearchOptions {
   q: string;
@@ -57,74 +59,92 @@ export async function search(
   const limit = Math.min(opts.limit ?? 10, SEARCH_LIMIT_MAX);
 
   if (!opts.q.trim()) {
-    const [memories, entities] = await Promise.all([
-      db`
-        SELECT m.id, m.content, m.type, m.importance, m.updated_at, n.name AS namespace
-        FROM memories m JOIN namespaces n ON n.id = m.namespace_id
-        WHERE NOT m.archived
-        ORDER BY m.updated_at DESC LIMIT ${limit}
-      `,
-      db`
-        SELECT e.id, e.name, e.type, e.importance, e.updated_at, n.name AS namespace
-        FROM entities e JOIN namespaces n ON n.id = e.namespace_id
-        ORDER BY e.updated_at DESC LIMIT ${limit}
-      `,
+    const [memoriesRows, entitiesRows] = await Promise.all([
+      db
+        .select({
+          ...getTableColumns(memories),
+          namespace: namespaces.name,
+        })
+        .from(memories)
+        .innerJoin(namespaces, eq(namespaces.id, memories.namespaceId))
+        .where(eq(memories.archived, false))
+        .orderBy(desc(memories.updatedAt))
+        .limit(limit),
+      db
+        .select({
+          ...getTableColumns(entities),
+          namespace: namespaces.name,
+        })
+        .from(entities)
+        .innerJoin(namespaces, eq(namespaces.id, entities.namespaceId))
+        .orderBy(desc(entities.updatedAt))
+        .limit(limit),
     ]);
-    return [
-      ...memories.map((m: Record<string, unknown>) => ({
+    const hits = [
+      ...memoriesRows.map((m) => ({
         kind: "memory" as const,
         id: String(m.id),
         content: String(m.content),
         type: String(m.type),
         importance: Number(m.importance),
-        updated_at: String(m.updated_at),
+        updated_at: String(m.updatedAt),
         namespace: String(m.namespace),
         snippet: snippet(String(m.content)),
         score: 0,
       })),
-      ...entities.map((e: Record<string, unknown>) => ({
+      ...entitiesRows.map((e) => ({
         kind: "entity" as const,
         id: String(e.id),
         name: String(e.name),
         type: String(e.type),
         importance: Number(e.importance),
-        updated_at: String(e.updated_at),
+        updated_at: String(e.updatedAt),
         namespace: String(e.namespace),
         snippet: snippet(String(e.summary ?? e.name)),
         score: 0,
       })),
     ];
+    hits.sort((a, b) =>
+      String(b.updated_at).localeCompare(String(a.updated_at)),
+    );
+    return hits.slice(0, limit);
   }
 
   const words = (opts.q.match(WORD_RE) ?? []).map((w) => w.toLowerCase());
-  const like = `%${opts.q}%`;
+  // Escape LIKE metacharacters so input matches literally.
+  const like = `%${opts.q.replace(/[%_\\]/g, "\\$&")}%`;
 
-  const where: string[] = [];
-  const params: unknown[] = [];
-  const bind = (value: unknown) => {
-    params.push(value);
-    return `$${params.length}`;
-  };
+  // Each UNION branch has a different alias (m vs e) — build predicates
+  // per-branch (a shared one referencing both aliases is invalid SQL).
+  const memWhere: SQL[] = [];
+  const entWhere: SQL[] = [];
   if (opts.namespace !== undefined) {
-    where.push(`n.name = ${bind(opts.namespace)}`);
+    memWhere.push(sql`n.name = ${opts.namespace}`);
+    entWhere.push(sql`n.name = ${opts.namespace}`);
   }
   if (opts.type !== undefined) {
-    where.push(`(m.type = ${bind(opts.type)} OR e.type = ${bind(opts.type)})`);
+    memWhere.push(sql`m.type = ${opts.type}`);
+    entWhere.push(sql`e.type = ${opts.type}`);
   }
-  const nsWhere = where.length ? `AND ${where.join(" AND ")}` : "";
+  const memWhereSql = memWhere.length
+    ? sql`AND ${sql.join(memWhere, sql` AND `)}`
+    : sql``;
+  const entWhereSql = entWhere.length
+    ? sql`AND ${sql.join(entWhere, sql` AND `)}`
+    : sql``;
 
-  const rows = await db.query(
-    `SELECT 'memory' AS kind, m.id, m.content AS text, m.type, m.importance, m.updated_at, n.name AS namespace
-       FROM memories m JOIN namespaces n ON n.id = m.namespace_id
-       WHERE NOT m.archived AND m.content ILIKE ${bind(like)} ${nsWhere}
-     UNION ALL
-     SELECT 'entity' AS kind, e.id, e.name AS text, e.type, e.importance, e.updated_at, n.name AS namespace
-       FROM entities e JOIN namespaces n ON n.id = e.namespace_id
-       WHERE (e.name ILIKE ${bind(like)} OR e.summary ILIKE ${bind(like)}) ${nsWhere}
-     ORDER BY updated_at DESC
-     LIMIT ${bind(limit * 4)}`,
-    params,
-  );
+  const res = await db.execute(sql`
+    SELECT 'memory' AS kind, m.id, m.content AS text, m.type, m.importance, m.updated_at, n.name AS namespace
+      FROM ${memories} m JOIN ${namespaces} n ON n.id = m.namespace_id
+      WHERE NOT m.archived AND m.content ILIKE ${like} ESCAPE '\\' ${memWhereSql}
+    UNION ALL
+    SELECT 'entity' AS kind, e.id, e.name AS text, e.type, e.importance, e.updated_at, n.name AS namespace
+      FROM ${entities} e JOIN ${namespaces} n ON n.id = e.namespace_id
+      WHERE (e.name ILIKE ${like} ESCAPE '\\' OR e.summary ILIKE ${like} ESCAPE '\\') ${entWhereSql}
+    ORDER BY updated_at DESC
+    LIMIT ${limit * 4}
+  `);
+  const rows = res.rows as Array<Record<string, unknown>>;
 
   const hits: SearchHit[] = [];
   const seen = new Set<string>();

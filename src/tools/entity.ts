@@ -8,7 +8,7 @@ import {
   findEntities,
   getEntity,
   updateEntity,
-} from "../lib/entities.ts";
+} from "@sepia/shared";
 import { safe } from "./util.ts";
 
 export function registerEntityTools(server: McpServer<any, any>) {

@@ -8,7 +8,7 @@ import {
   getMemory,
   queryMemories,
   updateMemory,
-} from "../lib/memories.ts";
+} from "@sepia/shared";
 import { safe } from "./util.ts";
 
 export function registerMemoryTools(server: McpServer<any, any>) {

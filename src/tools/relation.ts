@@ -2,11 +2,7 @@ import type { McpServer } from "tmcp";
 import * as v from "valibot";
 import { RelationToolInput } from "@sepia/shared";
 import { db } from "../db.ts";
-import {
-  createRelation,
-  deleteRelation,
-  listRelations,
-} from "../lib/relations.ts";
+import { createRelation, deleteRelation, listRelations } from "@sepia/shared";
 import { safe } from "./util.ts";
 
 export function registerRelationTools(server: McpServer<any, any>) {

@@ -1,9 +1,11 @@
-import type { Db } from "../db.ts";
+import type { Db } from "../client.ts";
+import { sql } from "drizzle-orm";
+import { memories } from "../schema.ts";
 import {
   PURGE_AFTER_DAYS,
   STALE_AFTER_DAYS,
   STALE_IMPORTANCE,
-} from "@sepia/shared";
+} from "../../types.ts";
 
 export interface ConsolidateResult {
   archived_stale: number;
@@ -12,26 +14,25 @@ export interface ConsolidateResult {
 }
 
 /**
- * Idempotent maintenance sweep — pure SQL, no LLM calls, no embeddings.
- *
- * 1. Archive stale: importance < 0.3 AND untouched for 90 days.
- * 2. Dedup: per namespace, trimmed case-insensitive exact content match —
- *    keep the highest importance (tie: oldest), archive the rest.
- * 3. Purge: hard-delete rows archived for more than 30 days.
+ * Idempotent maintenance sweep — pure SQL, no LLM calls.
+ * 1. Archive stale (importance < 0.3, untouched 90d).
+ * 2. Dedup per namespace (trimmed case-insensitive content; keep highest
+ *    importance, tie: oldest).
+ * 3. Purge archived rows older than 30d.
  */
 export async function consolidate(db: Db): Promise<ConsolidateResult> {
-  const stale = await db`
-    UPDATE memories SET archived = true, updated_at = now()
+  const stale = await db.execute(sql`
+    UPDATE ${memories} SET archived = true, updated_at = now()
     WHERE NOT archived
       AND importance < ${STALE_IMPORTANCE}
       AND updated_at < now() - (${STALE_AFTER_DAYS} * interval '1 day')
     RETURNING id
-  `;
+  `);
 
-  const duplicates = await db`
-    UPDATE memories m SET archived = true, updated_at = now()
+  const duplicates = await db.execute(sql`
+    UPDATE ${memories} m SET archived = true, updated_at = now()
     WHERE NOT m.archived AND EXISTS (
-      SELECT 1 FROM memories k
+      SELECT 1 FROM ${memories} k
       WHERE k.namespace_id = m.namespace_id
         AND lower(btrim(k.content)) = lower(btrim(m.content))
         AND (
@@ -41,17 +42,17 @@ export async function consolidate(db: Db): Promise<ConsolidateResult> {
         )
     )
     RETURNING id
-  `;
+  `);
 
-  const purged = await db`
-    DELETE FROM memories
+  const purged = await db.execute(sql`
+    DELETE FROM ${memories}
     WHERE archived AND updated_at < now() - (${PURGE_AFTER_DAYS} * interval '1 day')
     RETURNING id
-  `;
+  `);
 
   return {
-    archived_stale: stale.length,
-    archived_duplicates: duplicates.length,
-    purged: purged.length,
+    archived_stale: stale.rows.length,
+    archived_duplicates: duplicates.rows.length,
+    purged: purged.rows.length,
   };
 }

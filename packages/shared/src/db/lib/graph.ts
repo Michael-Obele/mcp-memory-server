@@ -1,5 +1,7 @@
-import type { Db } from "../db.ts";
-import { MemoryError } from "../db.ts";
+import type { Db } from "../client.ts";
+import { MemoryError } from "../errors.ts";
+import { eq, sql } from "drizzle-orm";
+import { entities, relations } from "../schema.ts";
 
 export interface GraphNode {
   id: string;
@@ -25,14 +27,18 @@ export interface GraphResult {
 /**
  * BFS traversal of the knowledge graph from a start entity, in both
  * directions, up to `depth` hops (max 3). Deduplicates visited entities and
- * edges. Same shape as the future /api/graph endpoint.
+ * edges. Same shape as the /api/graph endpoint.
  */
 export async function traverseGraph(
   db: Db,
   startId: string,
   depth = 1,
 ): Promise<GraphResult> {
-  const start = await db`SELECT * FROM entities WHERE id = ${startId} LIMIT 1`;
+  const start = await db
+    .select()
+    .from(entities)
+    .where(eq(entities.id, startId))
+    .limit(1);
   if (!start[0]) {
     throw new MemoryError("not_found", `entity '${startId}' not found`);
   }
@@ -61,15 +67,19 @@ export async function traverseGraph(
     if (frontier.size === 0) break;
     depthReached = d;
     const ids = [...frontier];
-    const rows = await db`
+    // Double self-join; pass ids as a Postgres array literal (a raw JS array
+    // renders as ANY(($1)) with one string param and fails).
+    const idArray = `{${ids.join(",")}}`;
+    const res = await db.execute(sql`
       SELECT r.id, r.source_id, r.target_id, r.relation_type, r.weight,
              s.name AS source_name, s.type AS source_type, s.importance AS source_importance,
              t.name AS target_name, t.type AS target_type, t.importance AS target_importance
-      FROM relations r
-      JOIN entities s ON s.id = r.source_id
-      JOIN entities t ON t.id = r.target_id
-      WHERE r.source_id = ANY(${ids}) OR r.target_id = ANY(${ids})
-    `;
+      FROM ${relations} r
+      JOIN ${entities} s ON s.id = r.source_id
+      JOIN ${entities} t ON t.id = r.target_id
+      WHERE r.source_id = ANY(${idArray}) OR r.target_id = ANY(${idArray})
+    `);
+    const rows = res.rows as Array<Record<string, unknown>>;
     const next = new Set<string>();
     for (const row of rows) {
       const edgeId = String(row.id);

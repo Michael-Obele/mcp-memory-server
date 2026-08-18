@@ -2,7 +2,7 @@ import type { McpServer } from "tmcp";
 import * as v from "valibot";
 import { ConsolidateToolInput } from "@sepia/shared";
 import { db } from "../db.ts";
-import { consolidate } from "../lib/consolidate.ts";
+import { consolidate } from "@sepia/shared";
 import { safe } from "./util.ts";
 
 export function registerConsolidateTools(server: McpServer<any, any>) {

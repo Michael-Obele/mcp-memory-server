@@ -7,7 +7,7 @@ import {
   deleteNamespace,
   getNamespace,
   listNamespaces,
-} from "../lib/namespaces.ts";
+} from "@sepia/shared";
 import { safe } from "./util.ts";
 
 export function registerNamespaceTools(server: McpServer<any, any>) {

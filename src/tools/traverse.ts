@@ -2,7 +2,7 @@ import type { McpServer } from "tmcp";
 import * as v from "valibot";
 import { TraverseToolInput } from "@sepia/shared";
 import { db } from "../db.ts";
-import { traverseGraph } from "../lib/graph.ts";
+import { traverseGraph } from "@sepia/shared";
 import { safe } from "./util.ts";
 
 export function registerTraverseTools(server: McpServer<any, any>) {
