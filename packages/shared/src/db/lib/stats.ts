@@ -1,5 +1,6 @@
 import type { Db } from "../client.ts";
 import { eq, sql } from "drizzle-orm";
+import type { BatchItem } from "drizzle-orm/batch";
 import { entities, memories, namespaces, relations } from "../schema.ts";
 import { STALE_AFTER_DAYS, STALE_IMPORTANCE } from "../../types.ts";
 
@@ -36,18 +37,10 @@ export interface Stats {
 
 /** Dashboard stats: counts, top entities, decay candidates, recent feed. */
 export async function getStats(db: Db): Promise<Stats> {
-  const [
-    ns,
-    ent,
-    mem,
-    rel,
-    archived,
-    memByType,
-    entByType,
-    top,
-    decay,
-    recent,
-  ] = await Promise.all([
+  // All 10 queries in ONE Neon HTTP round trip via db.batch. Firing them as
+  // separate requests (even via Promise.all) costs ~500-700ms each through the
+  // Neon HTTP driver, so getStats used to take ~10s. A single batch is ~1s.
+  const queries: BatchItem<"pg">[] = [
     db.select({ n: sql<number>`count(*)::int` }).from(namespaces),
     db.select({ n: sql<number>`count(*)::int` }).from(entities),
     db.select({ n: sql<number>`count(*)::int` }).from(memories),
@@ -95,7 +88,20 @@ export async function getStats(db: Db): Promise<Stats> {
       .where(eq(memories.archived, false))
       .orderBy(sql`${memories.updatedAt} DESC`)
       .limit(10),
-  ]);
+  ];
+
+  const [
+    ns,
+    ent,
+    mem,
+    rel,
+    archived,
+    memByType,
+    entByType,
+    top,
+    decay,
+    recent,
+  ] = await db.batch(queries as [BatchItem<"pg">, ...BatchItem<"pg">[]]);
 
   const memoriesByType: Record<string, number> = {};
   for (const r of memByType) memoriesByType[String(r.type)] = Number(r.n);
@@ -110,21 +116,32 @@ export async function getStats(db: Db): Promise<Stats> {
     archived: Number(archived[0]?.n ?? 0),
     memories_by_type: memoriesByType,
     entities_by_type: entitiesByType,
-    top_entities: top.map((e) => ({
-      id: String(e.id),
-      name: String(e.name),
-      type: String(e.type),
-      access_count: Number(e.access_count),
-      importance: Number(e.importance),
-    })),
+    top_entities: top.map(
+      (e: { id: unknown; name: unknown; type: unknown; access_count: unknown; importance: unknown }) => ({
+        id: String(e.id),
+        name: String(e.name),
+        type: String(e.type),
+        access_count: Number(e.access_count),
+        importance: Number(e.importance),
+      }),
+    ),
     decay_candidates: Number(decay.rows[0]?.n ?? 0),
-    recent_memories: recent.map((m) => ({
-      id: String(m.id),
-      content: String(m.content),
-      type: String(m.type),
-      importance: Number(m.importance),
-      namespace: String(m.namespace),
-      updated_at: String(m.updated_at),
-    })),
+    recent_memories: recent.map(
+      (m: {
+        id: unknown;
+        content: unknown;
+        type: unknown;
+        importance: unknown;
+        namespace: unknown;
+        updated_at: unknown;
+      }) => ({
+        id: String(m.id),
+        content: String(m.content),
+        type: String(m.type),
+        importance: Number(m.importance),
+        namespace: String(m.namespace),
+        updated_at: String(m.updated_at),
+      }),
+    ),
   };
 }
