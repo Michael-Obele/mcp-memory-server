@@ -13,10 +13,10 @@ import { registerConsolidateTools } from "./tools/consolidate.ts";
 
 const server = new McpServer(
   {
-    name: "memory",
+    name: "sepia",
     version: "1.0.0",
     description:
-      "Personal knowledge-graph memory server: entities, relations, memories in namespaces, with search, traversal, and consolidation.",
+      "Sepia — personal knowledge-graph memory server: entities, relations, memories in namespaces, with search, traversal, and consolidation.",
   },
   {
     adapter: new ValibotJsonSchemaAdapter(),
@@ -49,12 +49,12 @@ Bun.serve({
     // Health check for Fly's optional TCP check (NOT an HTTP smoke check —
     // those confuse Streamable HTTP servers).
     if (url.pathname === "/healthz") {
-      return Response.json({ ok: true, service: "mcp-memory" });
+      return Response.json({ ok: true, service: "sepia" });
     }
 
     if (url.pathname === "/") {
       return Response.json({
-        name: "memory",
+        name: "sepia",
         version: "1.0.0",
         mcp: "/mcp",
         health: "/healthz",

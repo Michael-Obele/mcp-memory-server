@@ -1,5 +1,8 @@
-app = "mcp-memory"
+app = "sepia"
 primary_region = "lhr"
+
+# Scale to zero when idle (free tier friendly). Set to 1 for always-on.
+min_machines_running = 0
 
 [build]
 dockerfile = "Dockerfile"
@@ -9,7 +12,6 @@ internal_port = 8080
 force_https = true
 auto_stop_machines = "stop" # scale to zero when idle
 auto_start_machines = true
-min_machines_running = 0    # 0 = free tier friendly; set 1 for always-on
 
 [vm]
 memory = "256mb"

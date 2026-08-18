@@ -1,4 +1,4 @@
-# Memory MCP Server
+# Sepia — Memory MCP Server
 
 > **7 tools. 1 purpose: remember everything so your AI doesn't forget — and never needs to be reminded.**
 
@@ -35,7 +35,7 @@ The [official MCP memory server](https://github.com/modelcontextprotocol/servers
 ```
                         ┌─────────────────────────────────┐
                         │         Browser (you)            │
-                        │  memory.svelte-apps.me           │
+                        │  sepia.svelte-apps.me            │
                         │  Dashboard SPA (static,          │
                         │  served from Netlify CDN)        │
                         └───────────────┬─────────────────┘
@@ -105,7 +105,7 @@ The contract teaches: **search before meaningful work**, **persist durable facts
 
 ## The Dashboard
 
-A static SPA at `memory.svelte-apps.me` (hosted on Netlify, swappable to Cloudflare Pages via one env var), talking to the same database through `/api/*`:
+A static SPA at `sepia.svelte-apps.me` (hosted on Netlify, swappable to Cloudflare Pages via one env var), talking to the same database through `/api/*`:
 
 - 🔍 Search all memories/entities; browse by namespace, type, importance
 - 🕸️ Interactive knowledge-graph view (cytoscape.js + dagre)
@@ -118,7 +118,7 @@ A static SPA at `memory.svelte-apps.me` (hosted on Netlify, swappable to Cloudfl
 A **Bun workspace monorepo**: one repo, one lockfile, three deploy entries — Fly.io builds the server from the root `Dockerfile`, Netlify builds `dashboard/` from `netlify.toml`, and the skill is installed by a script (no build).
 
 ```
-mcp-memory-server/                    # Bun workspace monorepo
+sepia/                                # Bun workspace monorepo
 ├── package.json                      # root scripts (dev, deploy:*)
 ├── bun.lock                          # ONE lockfile for the whole repo
 ├── Dockerfile                        # Fly.io entry — installs only the server's deps (--filter)
@@ -171,7 +171,7 @@ bun run dev:dashboard
 | `MCP_BEARER_TOKEN`   | Phase 1 auth token for `/mcp` and `/api/*` (`openssl rand -hex 32`) |
 | `DASHBOARD_PASSWORD` | Phase 1 dashboard login (OAuth Phase 2 replaces this)               |
 | `OAUTH_JWK_SECRET`   | Phase 2 OAuth signing key (Fly secret)                              |
-| `PUBLIC_API_URL`     | Dashboard build-time REST base (e.g. `https://mcp-memory.fly.dev`)  |
+| `PUBLIC_API_URL`     | Dashboard build-time REST base (e.g. `https://sepia.fly.dev`)  |
 | `PUBLIC_MCP_URL`     | Dashboard build-time MCP URL shown on `/connect`                    |
 
 ### Database
@@ -189,20 +189,20 @@ Schema: `namespaces` → `entities` (cascade delete), `relations` (weighted dire
 ### Server → Fly.io
 
 ```bash
-fly apps create mcp-memory
+fly apps create sepia
 fly secrets set DATABASE_URL="postgresql://..." MCP_BEARER_TOKEN="$(openssl rand -hex 32)"
 fly deploy
 ```
 
-- Dockerfile runs `bun install --frozen-lockfile --filter memory-server` — SvelteKit never enters the image (all workspace `package.json` files must be copied before install; Bun validates the full workspace graph against the lockfile).
+- Dockerfile runs `bun install --frozen-lockfile` — SvelteKit never enters the image (all workspace `package.json` files must be copied before install; Bun validates the full workspace graph against the lockfile).
 - `fly.toml` uses **scale-to-zero** (`min_machines_running = 0`): the free tier covers it, and cold starts (~1–2s for a thin Bun process) are acceptable for personal use. Set `min_machines_running = 1` (~$1–3/mo) if you want always-on.
 - ⚠️ Don't add a Fly HTTP smoke check — raw GETs confuse Streamable HTTP servers. If you want a health endpoint, expose `GET /healthz` with a TCP check.
 
-Verify with `curl -i https://mcp-memory.fly.dev/mcp` (expect 401 without a token — correct) or `npx @modelcontextprotocol/inspector` (Streamable HTTP, `Authorization: Bearer <token>`).
+Verify with `curl -i https://sepia.fly.dev/mcp` (expect 401 without a token — correct) or `npx @modelcontextprotocol/inspector` (Streamable HTTP, `Authorization: Bearer <token>`).
 
 ### Dashboard → Netlify
 
-Static SPA, built from the repo root (the workspace install must happen at root), published from `dashboard/build`. Attach the `memory.svelte-apps.me` subdomain, and add the origin to the API's CORS allowlist in `src/index.ts`. Credit math: a lean SPA (~150–250KB, no images) uses roughly **20–60 of 300 free credits/month**. Swapping to Cloudflare Pages later is a config change, not a rewrite.
+Static SPA, built from the repo root (the workspace install must happen at root), published from `dashboard/build`. Attach the `sepia.svelte-apps.me` subdomain, and add the origin to the API's CORS allowlist in `src/index.ts`. Credit math: a lean SPA (~150–250KB, no images) uses roughly **20–60 of 300 free credits/month**. Swapping to Cloudflare Pages later is a config change, not a rewrite.
 
 ## Connect Clients
 
@@ -211,7 +211,7 @@ Static SPA, built from the repo root (the workspace install must happen at root)
 **Claude Code:**
 
 ```bash
-claude mcp add --transport http memory https://mcp-memory.fly.dev/mcp \
+claude mcp add --transport http sepia https://sepia.fly.dev/mcp \
   --header "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -220,9 +220,9 @@ claude mcp add --transport http memory https://mcp-memory.fly.dev/mcp \
 ```json
 {
   "mcpServers": {
-    "memory": {
+    "sepia": {
       "type": "http",
-      "url": "https://mcp-memory.fly.dev/mcp",
+      "url": "https://sepia.fly.dev/mcp",
       "headers": { "Authorization": "Bearer YOUR_TOKEN" }
     }
   }
@@ -231,7 +231,7 @@ claude mcp add --transport http memory https://mcp-memory.fly.dev/mcp \
 
 **Zed** (Settings → Agent → MCP): same shape as above.
 
-**Older stdio-only clients:** use Fly's shim — `fly mcp proxy https://mcp-memory.fly.dev/mcp` (or `npx mcp-remote --header "Authorization: Bearer ..."`).
+**Older stdio-only clients:** use Fly's shim — `fly mcp proxy https://sepia.fly.dev/mcp` (or `npx mcp-remote --header "Authorization: Bearer ..."`).
 
 ### Online AIs (Phase 2 — OAuth 2.1, verified mid-2026)
 
@@ -260,7 +260,7 @@ Restart your editor to pick it up. Claude Code users can also invoke it on deman
 | ------------------------------------------- | ------------------------------------------------------------------------------------------------ | -------- |
 | M1 — Server on Fly.io, Bearer auth, 7 tools | Inspector connects; CRUD works end-to-end against Neon                                           | 2 days   |
 | M2 — Server instructions + skill            | New chat in Claude Code recalls a memory with zero reminder prompts; skill works in Zed + Cursor | 1 day    |
-| M3 — REST API + dashboard on Netlify        | Browse/search/graph/CRUD at `memory.svelte-apps.me`; stats load                                  | 1.5 days |
+| M3 — REST API + dashboard on Netlify        | Browse/search/graph/CRUD at `sepia.svelte-apps.me`; stats load                                  | 1.5 days |
 | M4 — OAuth 2.1 (`@tmcp/auth`)               | `codex mcp login` + inspector OAuth flow succeed; Claude connector works                         | 1 day    |
 | M5 — Online AI rollout                      | Grok + ChatGPT + Gemini connectors authorized; memory usable from web chats                      | 0.5 day  |
 
