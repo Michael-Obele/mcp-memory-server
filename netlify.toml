@@ -1,0 +1,19 @@
+# Netlify config for the sepia dashboard (monorepo root).
+# The workspace install happens at the root; the dashboard builds in dashboard/.
+# Remote functions (SSR) run in Netlify Functions and connect to Neon directly
+# via @sepia/shared — no REST API round-trip.
+
+[build]
+  command = "cd dashboard && bun run build"
+  publish = "dashboard/build"
+
+[functions]
+  directory = "dashboard/.netlify/functions-internal"
+
+[build.environment]
+  # The dashboard's remote functions need the same DATABASE_URL as the server.
+  # Set these in the Netlify UI (Site settings → Environment variables) instead
+  # of committing secrets:
+  #   DATABASE_URL      — Neon Postgres connection string
+  #   DASHBOARD_TOKEN   — token the sign-in screen validates against
+  #                       (falls back to MCP_BEARER_TOKEN if unset)
