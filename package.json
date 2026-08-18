@@ -11,22 +11,30 @@
     "dev": "bun --hot src/index.ts",
     "start": "bun run src/index.ts",
     "db:schema": "bun run scripts/db-schema.ts",
-    "seed": "bun run scripts/seed.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:pull": "drizzle-kit pull",
+    "db:cleanup": "bun run scripts/db-cleanup.ts",
+    "db:baseline": "bun run scripts/db-baseline.ts",
     "smoke": "bun run scripts/smoke.ts",
     "check": "tsc --noEmit",
     "install:skill": "bash scripts/install-skill.sh",
     "gen:skill-ref": "bun run scripts/gen-skill-ref.ts"
   },
   "dependencies": {
-    "@sepia/shared": "workspace:*",
     "@neondatabase/serverless": "^1.1.0",
+    "@sepia/shared": "workspace:*",
     "@tmcp/adapter-valibot": "^0.1.6",
     "@tmcp/transport-http": "^0.9.0",
+    "drizzle-orm": "^0.45.2",
     "tmcp": "^1.20.0",
     "valibot": "^1.4.2"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "^1.3.14",
+    "drizzle-kit": "^0.31.10",
+    "pg": "^8.23.0"
   },
   "peerDependencies": {
     "typescript": "^5"
