@@ -3,7 +3,18 @@ title: Sepia — Memory MCP Server
 status: in-progress
 owner: "@Michael-Obele"
 tags:
-  [mcp, tmcp, bun, valibot, neon-postgres, fly-io, agent-skills, dashboard, oauth, knowledge-graph]
+  [
+    mcp,
+    tmcp,
+    bun,
+    valibot,
+    neon-postgres,
+    fly-io,
+    agent-skills,
+    dashboard,
+    oauth,
+    knowledge-graph,
+  ]
 estimated_time: "5-7 days"
 prototype: false
 demo_url: ""
@@ -25,14 +36,14 @@ The 2026 hosted options went the other direction: mem0's local server is gone (h
 
 Revived from `archive/` with major new scope:
 
-| Change | Why |
-| ------ | --- |
-| **Fly.io** instead of Oracle Cloud + Coolify | No VM babysitting; scale-to-zero fits free tier; official MCP hosting docs; `fly mcp proxy` for old clients |
-| **MCP server instructions** | The server sends a usage contract in the `initialize` handshake; clients (Claude Code, Codex, Copilot, Goose, VS Code) inject it into the system prompt automatically → **no manual reminder prompt needed** |
-| **Bundled Agent Skill** (`skills/sepia/`) | Open Agent Skills standard (`SKILL.md`) works in Zed, Cursor, Claude Code, Codex, OpenCode — teaches any editor how to use the memory tools properly |
-| **Web dashboard** | Static SPA on **Netlify** (free CDN, existing `svelte-apps.me` domain); API + MCP stay on Fly with a CORS allowlist — the dashboard never wakes the Fly VM |
-| **Online AI support** | Grok, ChatGPT, Claude web, Gemini (Spark), Perplexity, Le Chat all accept remote MCP connectors → memory follows you to the web |
-| **OAuth 2.1** (Phase 2) | Required by ChatGPT/Gemini/Grok-style connectors; `@tmcp/auth` + Fly.io secret; Phase 1 = Bearer token |
+| Change                                       | Why                                                                                                                                                                                                          |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Fly.io** instead of Oracle Cloud + Coolify | No VM babysitting; scale-to-zero fits free tier; official MCP hosting docs; `fly mcp proxy` for old clients                                                                                                  |
+| **MCP server instructions**                  | The server sends a usage contract in the `initialize` handshake; clients (Claude Code, Codex, Copilot, Goose, VS Code) inject it into the system prompt automatically → **no manual reminder prompt needed** |
+| **Bundled Agent Skill** (`skills/sepia/`)    | Open Agent Skills standard (`SKILL.md`) works in Zed, Cursor, Claude Code, Codex, OpenCode — teaches any editor how to use the memory tools properly                                                         |
+| **Web dashboard**                            | Static SPA on **Netlify** (free CDN, existing `svelte-apps.me` domain); API + MCP stay on Fly with a CORS allowlist — the dashboard never wakes the Fly VM                                                   |
+| **Online AI support**                        | Grok, ChatGPT, Claude web, Gemini (Spark), Perplexity, Le Chat all accept remote MCP connectors → memory follows you to the web                                                                              |
+| **OAuth 2.1** (Phase 2)                      | Required by ChatGPT/Gemini/Grok-style connectors; `@tmcp/auth` + Fly.io secret; Phase 1 = Bearer token                                                                                                       |
 
 ## Architecture
 
@@ -321,8 +332,7 @@ sepia/                                # git repo — Bun workspace monorepo
 │   └── schema.sql                    # Database schema (above)
 └── scripts/
     ├── install-skill.sh              # copies skills/sepia into the right dir per editor
-    ├── gen-skill-ref.ts              # regenerates references/tools.md from shared schemas
-    └── seed.ts                       # optional: demo namespace + sample memories
+    └── gen-skill-ref.ts              # regenerates references/tools.md from shared schemas
 ```
 
 ```json
@@ -340,11 +350,11 @@ Server and dashboard both depend on it via `"@sepia/shared": "workspace:*"`. Bun
 
 **How each deploy environment picks its entry:**
 
-| Deploy target | Entry | Build | Run |
-| ------------- | ----- | ----- | --- |
-| Fly.io | root `Dockerfile` + `fly.toml` | Docker: `bun install --frozen-lockfile` | `bun run src/index.ts` |
-| Netlify | root `netlify.toml` | `bun install` (workspaces) → `cd dashboard && bun run build` | serves `dashboard/build` |
-| Editors (skill) | `scripts/install-skill.sh` | none (static files) | n/a |
+| Deploy target   | Entry                          | Build                                                        | Run                      |
+| --------------- | ------------------------------ | ------------------------------------------------------------ | ------------------------ |
+| Fly.io          | root `Dockerfile` + `fly.toml` | Docker: `bun install --frozen-lockfile`                      | `bun run src/index.ts`   |
+| Netlify         | root `netlify.toml`            | `bun install` (workspaces) → `cd dashboard && bun run build` | serves `dashboard/build` |
+| Editors (skill) | `scripts/install-skill.sh`     | none (static files)                                          | n/a                      |
 
 Root convenience scripts: `bun run dev` (server), `bun run dev:dashboard`, `bun run deploy:server`, `bun run deploy:dashboard`, `bun run install:skill`, `bun run gen:skill-ref`.
 
@@ -519,7 +529,7 @@ const transport = new HttpTransport(server, { path: "/mcp" });
 // The Netlify-hosted dashboard calls /api/* cross-origin — allowlist it.
 const ALLOWED_ORIGINS = [
   "https://sepia.svelte-apps.me", // Netlify dashboard (prod)
-  "http://localhost:5173",         // SvelteKit dev server
+  "http://localhost:5173", // SvelteKit dev server
 ];
 
 function corsHeaders(request: Request): Record<string, string> {
@@ -544,8 +554,8 @@ Bun.serve({
 
     // 1) MCP endpoint — Streamable HTTP, bearer-token guarded (no CORS: MCP clients aren't browsers)
     if (url.pathname.startsWith("/mcp")) {
-      const auth = requireAuth(request);           // Phase 1
-      if (auth instanceof Response) return auth;   // 401
+      const auth = requireAuth(request); // Phase 1
+      if (auth instanceof Response) return auth; // 401
       const response = await transport.respond(request, { db: sql });
       return response ?? new Response("Not Found", { status: 404 });
     }
@@ -589,7 +599,13 @@ export function registerEntityTools(server: McpServer) {
         "Create, get, update, delete, or find entities (knowledge graph nodes: people, projects, concepts, tools). " +
         "Actions: create | get | update | delete | find.",
       schema: v.object({
-        action: v.union([v.literal("create"), v.literal("get"), v.literal("update"), v.literal("delete"), v.literal("find")]),
+        action: v.union([
+          v.literal("create"),
+          v.literal("get"),
+          v.literal("update"),
+          v.literal("delete"),
+          v.literal("find"),
+        ]),
         namespace: v.optional(v.string(), "personal"),
         id: v.optional(v.string()),
         entity: v.optional(EntitySchema),
@@ -618,10 +634,13 @@ export function requireAuth(request: Request): Response | null {
   const auth = request.headers.get("authorization") ?? "";
   const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
   if (token === expected) return null;
-  return Response.json({ error: "unauthorized" }, {
-    status: 401,
-    headers: { "WWW-Authenticate": 'Bearer realm="sepia"' },
-  });
+  return Response.json(
+    { error: "unauthorized" },
+    {
+      status: 401,
+      headers: { "WWW-Authenticate": 'Bearer realm="sepia"' },
+    },
+  );
 }
 ```
 
@@ -629,10 +648,10 @@ export function requireAuth(request: Request): Response | null {
 
 ## Part 4: Authentication
 
-| Phase | Method | Works with | Effort |
-| ----- | ------ | ---------- | ------ |
-| **1 (ship first)** | Static Bearer token (`MCP_BEARER_TOKEN`) | Claude web/desktop/Code, Claude Code, Cursor, Zed, VS Code Copilot, OpenCode, Grok (if it supports custom headers — verify), any header-capable client | ~30 min |
-| **2 (required for full web support)** | **OAuth 2.1 + PKCE + dynamic client registration** | ChatGPT (Plus+), Gemini Spark, Perplexity, Le Chat, Grok — paste-URL-and-sign-in | ~1 day |
+| Phase                                 | Method                                             | Works with                                                                                                                                             | Effort  |
+| ------------------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------- |
+| **1 (ship first)**                    | Static Bearer token (`MCP_BEARER_TOKEN`)           | Claude web/desktop/Code, Claude Code, Cursor, Zed, VS Code Copilot, OpenCode, Grok (if it supports custom headers — verify), any header-capable client | ~30 min |
+| **2 (required for full web support)** | **OAuth 2.1 + PKCE + dynamic client registration** | ChatGPT (Plus+), Gemini Spark, Perplexity, Le Chat, Grok — paste-URL-and-sign-in                                                                       | ~1 day  |
 
 Phase 2 plan: use `@tmcp/auth` (TMCP's first-party auth package, [tmcp.io/docs/auth/oauth](https://tmcp.io/docs/auth/oauth)). Fly.io runs the auth server on the same app:
 
@@ -689,14 +708,14 @@ claude mcp add --transport http sepia https://sepia.fly.dev/mcp \
 
 ### Online AIs (Phase 2 — OAuth; verified support as of mid-2026)
 
-| AI | Where | Plan/plan-gate | Transport |
-| -- | ----- | -------------- | --------- |
-| **Claude** (claude.ai) | Settings → Connectors → Add custom connector → paste URL | Every plan (Free = 1 connector) | Streamable HTTP + OAuth (optional) |
-| **Grok** (xAI) | grok.com/connectors → New Connector → Custom | Paid plans | Streamable HTTP + OAuth |
-| **ChatGPT** | Settings → Apps → Developer mode → Create (paste URL, Scan Tools) | Plus and up, web only | Streamable HTTP + **OAuth required** |
-| **Gemini** | Settings → Connected Apps → Custom apps for Spark → Add | Google AI Pro/Ultra (Spark); Antigravity is free preview | Streamable HTTP + OAuth (DCR) |
-| **Perplexity** | Settings → Connectors → + Custom connector → Remote | Pro/Max/Enterprise | Streamable HTTP + OAuth |
-| **Le Chat** (Mistral) | Connectors → + Add Connector → Custom | Free/paid | OAuth 2.1 + DCR auto-detect |
+| AI                     | Where                                                             | Plan/plan-gate                                           | Transport                            |
+| ---------------------- | ----------------------------------------------------------------- | -------------------------------------------------------- | ------------------------------------ |
+| **Claude** (claude.ai) | Settings → Connectors → Add custom connector → paste URL          | Every plan (Free = 1 connector)                          | Streamable HTTP + OAuth (optional)   |
+| **Grok** (xAI)         | grok.com/connectors → New Connector → Custom                      | Paid plans                                               | Streamable HTTP + OAuth              |
+| **ChatGPT**            | Settings → Apps → Developer mode → Create (paste URL, Scan Tools) | Plus and up, web only                                    | Streamable HTTP + **OAuth required** |
+| **Gemini**             | Settings → Connected Apps → Custom apps for Spark → Add           | Google AI Pro/Ultra (Spark); Antigravity is free preview | Streamable HTTP + OAuth (DCR)        |
+| **Perplexity**         | Settings → Connectors → + Custom connector → Remote               | Pro/Max/Enterprise                                       | Streamable HTTP + OAuth              |
+| **Le Chat** (Mistral)  | Connectors → + Add Connector → Custom                             | Free/paid                                                | OAuth 2.1 + DCR auto-detect          |
 
 > All of these connect from the **provider's cloud**, so the server must be publicly reachable (it is — Fly.io with `force_https`). Local-only stdio configs won't work on web platforms; Streamable HTTP is the universal transport.
 
@@ -719,25 +738,25 @@ Full skill draft + install matrix in [skill.md](./skill.md). Quick summary:
 
 ## Milestones
 
-| # | Milestone | Exit criteria | Est. |
-| - | --------- | ------------- | ---- |
-| M1 | Server on Fly.io, Bearer auth, 7 tools | Inspector connects; CRUD works end-to-end against Neon | 2 days |
-| M2 | Server instructions + skill | New chat in Claude Code recalls a memory without a reminder prompt; skill works in Zed + Cursor | 1 day |
-| M3 | REST API + SvelteKit dashboard on Netlify (CORS wired) | Browse/search/graph/CRUD from browser at `sepia.svelte-apps.me`; stats load | 1.5 days |
-| M4 | OAuth 2.1 (`@tmcp/auth`) | `codex mcp login` + inspector OAuth flow succeed; Claude connector works | 1 day |
-| M5 | Online AI rollout | Grok + ChatGPT + Gemini connectors authorized; memory usable from web chats | 0.5 day |
+| #   | Milestone                                              | Exit criteria                                                                                   | Est.     |
+| --- | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------- | -------- |
+| M1  | Server on Fly.io, Bearer auth, 7 tools                 | Inspector connects; CRUD works end-to-end against Neon                                          | 2 days   |
+| M2  | Server instructions + skill                            | New chat in Claude Code recalls a memory without a reminder prompt; skill works in Zed + Cursor | 1 day    |
+| M3  | REST API + SvelteKit dashboard on Netlify (CORS wired) | Browse/search/graph/CRUD from browser at `sepia.svelte-apps.me`; stats load                     | 1.5 days |
+| M4  | OAuth 2.1 (`@tmcp/auth`)                               | `codex mcp login` + inspector OAuth flow succeed; Claude connector works                        | 1 day    |
+| M5  | Online AI rollout                                      | Grok + ChatGPT + Gemini connectors authorized; memory usable from web chats                     | 0.5 day  |
 
 **Release gate:** everything in M1-M3 works in a fresh chat with zero reminder prompts (verified via instructions + skill), and the dashboard shows the same data the agents write.
 
 ## Cost Breakdown (per month)
 
-| Item | Cost | Notes |
-| ---- | ---- | ----- |
-| Fly.io (1 shared-cpu 256MB VM, scale-to-zero) | **$0** | Free tier includes 3 such VMs; scale-to-zero = idle costs nothing |
-| Netlify (dashboard, static SPA) | **$0** | Free plan: 300 credits/mo (bandwidth 20/GB, deploy 15 each); a lean SPA uses ~20-60/mo |
-| Neon Postgres free tier | **$0** | 0.5 GB, 100 CU-hours — fine for ~10K memories |
-| Domain (optional) | $0–12/yr | `sepia.fly.dev` + `sepia.svelte-apps.me` subdomain are free |
-| **Total** | **$0** | Always-on variant (`min_machines_running = 1`): ~$1–3/mo |
+| Item                                          | Cost     | Notes                                                                                  |
+| --------------------------------------------- | -------- | -------------------------------------------------------------------------------------- |
+| Fly.io (1 shared-cpu 256MB VM, scale-to-zero) | **$0**   | Free tier includes 3 such VMs; scale-to-zero = idle costs nothing                      |
+| Netlify (dashboard, static SPA)               | **$0**   | Free plan: 300 credits/mo (bandwidth 20/GB, deploy 15 each); a lean SPA uses ~20-60/mo |
+| Neon Postgres free tier                       | **$0**   | 0.5 GB, 100 CU-hours — fine for ~10K memories                                          |
+| Domain (optional)                             | $0–12/yr | `sepia.fly.dev` + `sepia.svelte-apps.me` subdomain are free                            |
+| **Total**                                     | **$0**   | Always-on variant (`min_machines_running = 1`): ~$1–3/mo                               |
 
 ## Security & Privacy Notes
 
