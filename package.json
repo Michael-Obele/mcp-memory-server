@@ -1,5 +1,5 @@
 {
-  "name": "memory-server",
+  "name": "sepia",
   "module": "src/index.ts",
   "type": "module",
   "private": true,
@@ -13,10 +13,12 @@
     "db:schema": "bun run scripts/db-schema.ts",
     "seed": "bun run scripts/seed.ts",
     "smoke": "bun run scripts/smoke.ts",
-    "check": "tsc --noEmit"
+    "check": "tsc --noEmit",
+    "install:skill": "bash scripts/install-skill.sh",
+    "gen:skill-ref": "bun run scripts/gen-skill-ref.ts"
   },
   "dependencies": {
-    "@memory/shared": "workspace:*",
+    "@sepia/shared": "workspace:*",
     "@neondatabase/serverless": "^1.1.0",
     "@tmcp/adapter-valibot": "^0.1.6",
     "@tmcp/transport-http": "^0.9.0",

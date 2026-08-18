@@ -91,7 +91,7 @@ message (2)      → REMOVED
 Two complementary channels, one contract (`src/instructions.ts`):
 
 1. **MCP `instructions`** — sent in `InitializeResult`; clients that support it (Claude Code, Codex, VS Code Copilot Chat, Goose, Claude Desktop) inject it into the system prompt. The model then recalls before working and persists after learning — **without any user prompt**.
-2. **Agent Skill** (`skills/memory/SKILL.md`) — the open [Agent Skills](https://agentskills.io) standard, discovered by Zed, Cursor, Claude Code, Codex, OpenCode. Covers editors that ignore `instructions`.
+2. **Agent Skill** (`skills/sepia/SKILL.md`) — the open [Agent Skills](https://agentskills.io) standard, discovered by Zed, Cursor, Claude Code, Codex, OpenCode. Covers editors that ignore `instructions`.
 
 Rationale: the MCP maintainers themselves recommend [server instructions for global usage guidance](https://blog.modelcontextprotocol.io/posts/2025-11-03-using-server-instructions/) — but client support is inconsistent, so the skill is the portable guarantee. This belt-and-suspenders pattern is exactly what Creed ships (server sends an "instructions field carrying the read-before-work contract").
 
@@ -105,7 +105,7 @@ The **dashboard is a static SPA on Netlify** (revised 2026-08-15 — was: served
 | --------- | ---------------------- | -------------------------- |
 | UI load time | Cold start 1-2s after idle (VM + Neon) | Instant from CDN, always warm |
 | Fly usage | Every visit consumes Fly egress + wakes VM | Zero — VM stays asleep until an agent connects |
-| Domain | `mcp-memory.fly.dev/` | `memory.svelte-apps.me` (already owned) |
+| Domain | `sepia.fly.dev/` | `sepia.svelte-apps.me` (already owned) |
 | Deploys | UI + server coupled (one `fly deploy`) | Decoupled: `netlify deploy` doesn't touch the server |
 | Cost | $0 (free tier) | $0 (300 free credits/mo; SPA uses ~20-60) |
 | Extra wiring | None | CORS allowlist + preflight on the API |
@@ -120,26 +120,26 @@ The **dashboard is a static SPA on Netlify** (revised 2026-08-15 — was: served
 
 The repo is a **Bun workspace monorepo** with three packages:
 
-- `memory-server` (root) — MCP server + REST API (deployed by Fly.io via root `Dockerfile`)
-- `memory-dashboard` (`dashboard/`) — SvelteKit SPA (deployed by Netlify via root `netlify.toml`)
-- `@memory/shared` (`packages/shared/`) — Valibot schemas, types, and constants; **no build step** (Bun and Vite both import TS directly)
+- `sepia` (root) — MCP server + REST API (deployed by Fly.io via root `Dockerfile`)
+- `sepia-dashboard` (`dashboard/`) — SvelteKit SPA (deployed by Netlify via root `netlify.toml`)
+- `@sepia/shared` (`packages/shared/`) — Valibot schemas, types, and constants; **no build step** (Bun and Vite both import TS directly)
 
 | Criterion | Bun workspaces (chosen) | Plain folders (alternative) | Turborepo/Nx |
 | --------- | ----------------------- | --------------------------- | ------------ |
-| Shared schemas/types between server + dashboard | ✅ one `@memory/shared` | ❌ duplicated types → drift | ✅ (but overkill) |
+| Shared schemas/types between server + dashboard | ✅ one `@sepia/shared` | ❌ duplicated types → drift | ✅ (but overkill) |
 | Lockfiles | One `bun.lock` | Two (root + dashboard) | One |
 | Install | `bun install` once at root | Per-folder installs | Task runner + config |
-| Docker image size | `bun install --filter memory-server` keeps SvelteKit out | Same (per-folder) | Same |
+| Docker image size | `bun install --frozen-lockfile` keeps SvelteKit out | Same (per-folder) | Same |
 | Tooling cost | Zero (Bun native) | Zero | New dep + config for 2 packages |
 | Mental model | Workspaces + filter | Each folder = own repo | Workspaces + pipeline |
 
-**Why workspaces win here:** the dashboard is a *second client* of the API. Sharing Valibot schemas (`packages/shared/schemas.ts`) means the dashboard's forms validate against exactly what the server enforces, and `scripts/gen-skill-ref.ts` generates `skills/memory/references/tools.md` from the same schemas — three consumers, one source of truth.
+**Why workspaces win here:** the dashboard is a *second client* of the API. Sharing Valibot schemas (`packages/shared/schemas.ts`) means the dashboard's forms validate against exactly what the server enforces, and `scripts/gen-skill-ref.ts` generates `skills/sepia/references/tools.md` from the same schemas — three consumers, one source of truth.
 
 **Why not Turborepo/Nx:** a task runner pays off with many packages, build-graph caching, and parallel pipelines. We have two packages and one edge; the server runs TS directly under Bun (no build), and SvelteKit has its own build. Ceremony without benefit.
 
 **Why not plain folders:** workable, and the deploy configs would be identical — but you'd duplicate `entity`/`memory`/`relation` types and Valibot schemas in `src/` and `dashboard/`, and the skill-reference generator would have no schema source. The drift is exactly the bug this plan exists to avoid (agents writing memories that don't match the dashboard's expectations).
 
-**Deploy entries:** each environment selects its package explicitly — Fly: root `Dockerfile` with `--filter memory-server`; Netlify: root `netlify.toml` (installs workspace, builds `dashboard/`); skill: static install script. Documented in README → Project Structure.
+**Deploy entries:** each environment selects its package explicitly — Fly: root `Dockerfile` with `bun install --frozen-lockfile`; Netlify: root `netlify.toml` (installs workspace, builds `dashboard/`); skill: static install script. Documented in README → Project Structure.
 
 **Docker gotcha (verified):** with `--frozen-lockfile`, Bun validates the whole workspace graph — so the Dockerfile must copy **every** workspace `package.json` (including `dashboard/`'s) before installing, even when filtering to the server ([vpontis/bun-workspace-docker-example](https://github.com/vpontis/bun-workspace-docker-example)). The layer-cached copy order in the README's Dockerfile handles this.
 

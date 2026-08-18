@@ -68,14 +68,14 @@ Our differentiators, in order: (1) self-hosted remote Streamable HTTP server on 
 
 ## Online AI MCP support (verified mid-2026)
 
-| AI | Custom MCP | Where | Gate | Auth |
-| -- | ---------- | ----- | ---- | ---- |
-| Claude | ✅ "Custom connector" | Settings → Connectors | Every plan (Free = 1) | OAuth or none |
-| Grok (xAI) | ✅ "Bring your own MCP" | grok.com/connectors → New Connector → Custom | Paid plans; web/iOS/Android | OAuth |
-| ChatGPT | ✅ "Custom app" (renamed Dec 2025) | Settings → Apps → Developer mode → Create | Plus+, web only | **OAuth required** |
-| Gemini | ✅ via Spark custom apps | Settings → Connected Apps | Google AI Pro/Ultra (Spark); Antigravity free preview | OAuth (dynamic client registration) |
-| Perplexity | ✅ Custom connector → Remote | Settings → Connectors | Pro/Max/Enterprise | OAuth |
-| Le Chat | ✅ Custom MCP connector | Connectors → + Add | Free | OAuth 2.1 + DCR auto-detect |
+| AI         | Custom MCP                         | Where                                        | Gate                                                  | Auth                                |
+| ---------- | ---------------------------------- | -------------------------------------------- | ----------------------------------------------------- | ----------------------------------- |
+| Claude     | ✅ "Custom connector"              | Settings → Connectors                        | Every plan (Free = 1)                                 | OAuth or none                       |
+| Grok (xAI) | ✅ "Bring your own MCP"            | grok.com/connectors → New Connector → Custom | Paid plans; web/iOS/Android                           | OAuth                               |
+| ChatGPT    | ✅ "Custom app" (renamed Dec 2025) | Settings → Apps → Developer mode → Create    | Plus+, web only                                       | **OAuth required**                  |
+| Gemini     | ✅ via Spark custom apps           | Settings → Connected Apps                    | Google AI Pro/Ultra (Spark); Antigravity free preview | OAuth (dynamic client registration) |
+| Perplexity | ✅ Custom connector → Remote       | Settings → Connectors                        | Pro/Max/Enterprise                                    | OAuth                               |
+| Le Chat    | ✅ Custom MCP connector            | Connectors → + Add                           | Free                                                  | OAuth 2.1 + DCR auto-detect         |
 
 - **Key constraints**: web platforms connect from the **provider's cloud** (public URL required, no stdio); ChatGPT is remote-only (no stdio at all); most require **OAuth 2.1** — bearer-token-only servers work with Claude + local editors but not ChatGPT/Gemini/Grok-style connectors
 - Sources: [Tempreon guide (2026-07-18)](https://tempreon.com/blog/connect-custom-mcp-server-to-any-llm), [ChatForest cross-platform guide](https://chatforest.com/guides/mcp-across-ai-platforms/), [Claude Help Center](https://support.claude.com/en/articles/11175166-how-to-connect-remote-mcp-integrations-to-claude), [ChatGPT learn docs](https://learn.chatgpt.com/docs/extend/mcp), [tadata-org/mcp-client-compatibility](https://github.com/tadata-org/mcp-client-compatibility)
@@ -94,7 +94,7 @@ Our differentiators, in order: (1) self-hosted remote Streamable HTTP server on 
 - Netlify moved to **credit-based pricing**: Free = $0 forever, **300 credits/month hard limit** (no auto recharge — projects pause at the cap, but the cap also means you can never be billed). Costs: bandwidth **20 credits/GB**, web requests 2 credits/10k, production deploys **15 credits each**, compute 10 credits/GB-hr
 - A lean SPA (~150-250KB, no images) with a few hundred requests/mo ≈ **20-60 credits/mo** → comfortable margin, and the hard cap guarantees no surprise bill
 - The limits are **pooled across all sites on the account** — worth monitoring if `svelte-apps.me` hosts several projects (Netlify shows usage in the dashboard)
-- `svelte-apps.me` is already attached to the user's Netlify account → `memory.svelte-apps.me` subdomain is free, Let's Encrypt SSL automatic
+- `svelte-apps.me` is already attached to the user's Netlify account → `sepia.svelte-apps.me` subdomain is free, Let's Encrypt SSL automatic
 - **Fallback:** Cloudflare Pages free tier is more generous (500 builds/mo, unlimited bandwidth) — because the dashboard is a static build with an env-var API URL, swapping is a config change, not a rewrite
 - Sources: [netlify.com/pricing](https://www.netlify.com/pricing/), [credit-based plans docs](https://docs.netlify.com/manage/accounts-and-billing/billing/billing-for-credit-based-plans/credit-based-pricing-plans/), [free-tier breakdown (2026-07)](https://gautamkhorana.com/blog/netlify-free-tier-limits-2026/)
 
@@ -102,7 +102,7 @@ Our differentiators, in order: (1) self-hosted remote Streamable HTTP server on 
 
 - `bun install --filter <pkg>` installs only a subset of workspaces — the documented way to keep SvelteKit out of the server image
 - **Gotcha:** with `--frozen-lockfile`, Bun validates the full workspace graph, so ALL workspace `package.json` files must be present in the build context (copy them before `bun install` for layer caching) — otherwise: `error: lockfile had changes, but lockfile is frozen`. Real-world failure documented in [vpontis/bun-workspace-docker-example](https://github.com/vpontis/bun-workspace-docker-example); also covered by the project's own proposal there (`bun install --filter api` needs the whole workspace copied)
-- `--filter` also runs scripts across workspaces (`bun --filter '*' build`) respecting dependency order — useful later if `@memory/shared` ever gains a build step
+- `--filter` also runs scripts across workspaces (`bun --filter '*' build`) respecting dependency order — useful later if `@sepia/shared` ever gains a build step
 - Sources: [bun install docs](https://bun.com/docs/pm/cli/install), [bun --filter docs](https://bun.com/docs/pm/filter), [bun workspaces docs](https://bun.com/docs/pm/workspaces)
 
 ## Fly.io Hosting (verified)

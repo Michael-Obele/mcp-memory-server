@@ -1,6 +1,6 @@
 import type { McpServer } from "tmcp";
 import * as v from "valibot";
-import { NamespaceToolInput } from "@memory/shared";
+import { NamespaceToolInput } from "@sepia/shared";
 import { db } from "../db.ts";
 import {
   createNamespace,

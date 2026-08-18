@@ -1,6 +1,6 @@
 import type { McpServer } from "tmcp";
 import * as v from "valibot";
-import { SearchToolInput } from "@memory/shared";
+import { SearchToolInput } from "@sepia/shared";
 import { db } from "../db.ts";
 import { search } from "../lib/search.ts";
 import { safe } from "./util.ts";

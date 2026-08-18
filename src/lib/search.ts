@@ -1,5 +1,5 @@
 import type { Db } from "../db.ts";
-import { SEARCH_LIMIT_MAX } from "@memory/shared";
+import { SEARCH_LIMIT_MAX } from "@sepia/shared";
 
 export interface SearchOptions {
   q: string;

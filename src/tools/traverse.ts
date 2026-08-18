@@ -1,6 +1,6 @@
 import type { McpServer } from "tmcp";
 import * as v from "valibot";
-import { TraverseToolInput } from "@memory/shared";
+import { TraverseToolInput } from "@sepia/shared";
 import { db } from "../db.ts";
 import { traverseGraph } from "../lib/graph.ts";
 import { safe } from "./util.ts";

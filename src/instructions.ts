@@ -3,7 +3,7 @@
  * field in the `initialize` handshake. Supporting clients (Claude Code,
  * Codex, VS Code Copilot Chat, Goose, Claude Desktop) inject it into the
  * model's system prompt — the model reads it before any tool schemas or
- * user messages. The bundled Agent Skill (skills/memory/SKILL.md) carries
+ * user messages. The bundled Agent Skill (skills/sepia/SKILL.md) carries
  * the same contract for editors that ignore `instructions`.
  */
 export const MEMORY_CONTRACT = `You are connected to the user's personal memory server. It stores a

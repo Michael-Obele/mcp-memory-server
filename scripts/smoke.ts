@@ -10,7 +10,7 @@
  *   SMOKE_URL=https://... bun run smoke    # against a deployed server
  */
 import { db } from "../src/db.ts";
-import { TOOL_NAMES } from "@memory/shared";
+import { TOOL_NAMES } from "@sepia/shared";
 
 const BASE = process.env.SMOKE_URL ?? "http://localhost:8080/mcp";
 const token = process.env.MCP_BEARER_TOKEN;
@@ -118,8 +118,8 @@ const init = (await rpc("initialize", {
 
 check("initialize succeeds", Boolean(init));
 check(
-  "server name is 'memory'",
-  init.serverInfo?.name === "memory",
+  "server name is 'sepia'",
+  init.serverInfo?.name === "sepia",
   init.serverInfo?.name,
 );
 check(

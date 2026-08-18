@@ -1,6 +1,6 @@
 import type { McpServer } from "tmcp";
 import * as v from "valibot";
-import { ConsolidateToolInput } from "@memory/shared";
+import { ConsolidateToolInput } from "@sepia/shared";
 import { db } from "../db.ts";
 import { consolidate } from "../lib/consolidate.ts";
 import { safe } from "./util.ts";

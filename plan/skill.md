@@ -19,17 +19,17 @@ Same contract, two delivery channels. If the client supports `instructions`, the
 ## Repo layout
 
 ```
-skills/memory/
+skills/sepia/
 ├── SKILL.md              # ← the skill (frontmatter + body, < 500 lines)
 └── references/
     └── tools.md          # per-tool reference: schemas, examples, edge cases
 ```
 
-## SKILL.md (draft — copy verbatim into `skills/memory/SKILL.md`)
+## SKILL.md (draft — copy verbatim into `skills/sepia/SKILL.md`)
 
 ```markdown
 ---
-name: memory
+name: sepia
 description: >-
   Use when the user's AI assistant should recall or persist long-term knowledge
   about the user, their projects, preferences, decisions, people, conventions,
@@ -40,10 +40,10 @@ description: >-
   content or code snippets.
 ---
 
-# Memory (remote knowledge-graph memory server)
+# Sepia (remote knowledge-graph memory server)
 
 You are connected to the user's personal memory server over MCP
-(https://mcp-memory.fly.dev/mcp). It stores a knowledge graph in namespaces
+(https://sepia.fly.dev/mcp). It stores a knowledge graph in namespaces
 (default `personal`): **entities** (nodes: people, projects, concepts, tools),
 **relations** (directed edges), **memories** (facts/observations with
 importance scores).
@@ -119,7 +119,7 @@ For full tool schemas and action enums, see [references/tools.md](./references/t
 
 Records the exact Valibot schema per tool — one entry per tool with input
 shape, output shape, and 2-3 example calls. Source of truth is
-`packages/shared/src/schemas.ts` (`@memory/shared`) at build time; the
+`packages/shared/src/schemas.ts` (`@sepia/shared`) at build time; the
 `scripts/gen-skill-ref.ts` codegen regenerates this file from those schemas
 (initial hand-write is fine, wire up the generator before M2 ships). Example
 entry:
@@ -140,11 +140,11 @@ Actions: create | get | update | delete | query
 
 | Editor | Path | Install |
 | ------ | ---- | ------- |
-| Zed | `~/.agents/skills/memory/` | `cp -r skills/memory ~/.agents/skills/memory` (works even though it's outside the project — global skills) |
-| Cursor | `.cursor/skills/memory/` (repo) or `~/.cursor/skills/` (global) | copy; Cursor also picks up `.claude/skills/` for compatibility |
-| Claude Code | `.claude/skills/memory/` (project) or `~/.claude/skills/` (personal) | copy; invoke with `/memory` |
-| Codex | `.codex/skills/memory/` or `~/.codex/skills/` | copy |
-| OpenCode | `.opencode/skills/memory/` (verify path in current docs) | copy |
+| Zed | `~/.agents/skills/sepia/` | `cp -r skills/sepia ~/.agents/skills/sepia` (works even though it's outside the project — global skills) |
+| Cursor | `.cursor/skills/sepia/` (repo) or `~/.cursor/skills/` (global) | copy; Cursor also picks up `.claude/skills/` for compatibility |
+| Claude Code | `.claude/skills/sepia/` (project) or `~/.claude/skills/` (personal) | copy; invoke with `/sepia` |
+| Codex | `.codex/skills/sepia/` or `~/.codex/skills/` | copy |
+| OpenCode | `.opencode/skills/sepia/` (verify path in current docs) | copy |
 
 ### One-shot installer (`scripts/install-skill.sh`)
 
@@ -152,14 +152,14 @@ Actions: create | get | update | delete | query
 #!/usr/bin/env bash
 # Installs the memory skill into every editor dir it can find.
 set -euo pipefail
-SRC="$(dirname "$0")/../skills/memory"
+SRC="$(dirname "$0")/../skills/sepia"
 
 install_to() { mkdir -p "$1" && cp -R "$SRC/." "$1/" && echo "installed → $1"; }
 
-[ -d "$HOME/.agents/skills" ] && install_to "$HOME/.agents/skills/memory"
-[ -d "$HOME/.cursor/skills" ] && install_to "$HOME/.cursor/skills/memory"
-[ -d "$HOME/.claude/skills" ] && install_to "$HOME/.claude/skills/memory"
-[ -d "$HOME/.codex/skills" ] && install_to "$HOME/.codex/skills/memory"
+[ -d "$HOME/.agents/skills" ] && install_to "$HOME/.agents/skills/sepia"
+[ -d "$HOME/.cursor/skills" ] && install_to "$HOME/.cursor/skills/sepia"
+[ -d "$HOME/.claude/skills" ] && install_to "$HOME/.claude/skills/sepia"
+[ -d "$HOME/.codex/skills" ] && install_to "$HOME/.codex/skills/sepia"
 echo "Done. Restart your editor to pick up the skill."
 ```
 

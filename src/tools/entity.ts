@@ -1,6 +1,6 @@
 import type { McpServer } from "tmcp";
 import * as v from "valibot";
-import { DEFAULT_NAMESPACE, EntityToolInput } from "@memory/shared";
+import { DEFAULT_NAMESPACE, EntityToolInput } from "@sepia/shared";
 import { db } from "../db.ts";
 import {
   createEntity,

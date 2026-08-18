@@ -1,5 +1,5 @@
 ---
-title: Memory MCP Server
+title: Sepia — Memory MCP Server
 status: in-progress
 owner: "@Michael-Obele"
 tags:
@@ -9,7 +9,7 @@ prototype: false
 demo_url: ""
 ---
 
-# Memory MCP Server
+# Sepia — Memory MCP Server
 
 A personal, remote knowledge-graph memory MCP server for AI coding agents — self-hosted on **Fly.io**, with a **bundled Agent Skill**, **MCP server instructions** (auto-injected into the model's system prompt), a **web dashboard**, and out-of-the-box support for **online AIs that speak MCP** (Grok, ChatGPT, Claude, Gemini, Perplexity).
 
@@ -29,7 +29,7 @@ Revived from `archive/` with major new scope:
 | ------ | --- |
 | **Fly.io** instead of Oracle Cloud + Coolify | No VM babysitting; scale-to-zero fits free tier; official MCP hosting docs; `fly mcp proxy` for old clients |
 | **MCP server instructions** | The server sends a usage contract in the `initialize` handshake; clients (Claude Code, Codex, Copilot, Goose, VS Code) inject it into the system prompt automatically → **no manual reminder prompt needed** |
-| **Bundled Agent Skill** (`skills/memory/`) | Open Agent Skills standard (`SKILL.md`) works in Zed, Cursor, Claude Code, Codex, OpenCode — teaches any editor how to use the memory tools properly |
+| **Bundled Agent Skill** (`skills/sepia/`) | Open Agent Skills standard (`SKILL.md`) works in Zed, Cursor, Claude Code, Codex, OpenCode — teaches any editor how to use the memory tools properly |
 | **Web dashboard** | Static SPA on **Netlify** (free CDN, existing `svelte-apps.me` domain); API + MCP stay on Fly with a CORS allowlist — the dashboard never wakes the Fly VM |
 | **Online AI support** | Grok, ChatGPT, Claude web, Gemini (Spark), Perplexity, Le Chat all accept remote MCP connectors → memory follows you to the web |
 | **OAuth 2.1** (Phase 2) | Required by ChatGPT/Gemini/Grok-style connectors; `@tmcp/auth` + Fly.io secret; Phase 1 = Bearer token |
@@ -39,7 +39,7 @@ Revived from `archive/` with major new scope:
 ```
                         ┌─────────────────────────────────┐
                         │         Browser (you)            │
-                        │  memory.svelte-apps.me           │
+                        │  sepia.svelte-apps.me            │
                         │  Dashboard SPA (static,          │
                         │  served from Netlify CDN)        │
                         └───────────────┬─────────────────┘
@@ -119,7 +119,7 @@ TMCP supports this natively (verified against [tmcp.io/docs/core/mcp-server](htt
 
 ```typescript
 const server = new McpServer(
-  { name: "memory", version: "1.0.0" },
+  { name: "sepia", version: "1.0.0" },
   {
     adapter: new ValibotJsonSchemaAdapter(),
     capabilities: { tools: {} },
@@ -174,7 +174,7 @@ A web UI served from the same Fly.io app (`/`), talking to the same database thr
 - 📊 Stats: counts, top entities, recent memories, decay/consolidation status
 - 🔗 "Connect an AI" page: copy-paste configs for Grok, ChatGPT, Claude, etc.
 
-Built with **Svelte 5 + SvelteKit (`adapter-static`)** → static build hosted free on **Netlify** at `memory.svelte-apps.me` (existing domain); talks to the Fly API over CORS. Hosting is swappable (Cloudflare Pages / Fly) via one env var.
+Built with **Svelte 5 + SvelteKit (`adapter-static`)** → static build hosted free on **Netlify** at `sepia.svelte-apps.me` (existing domain); talks to the Fly API over CORS. Hosting is swappable (Cloudflare Pages / Fly) via one env var.
 
 Full spec: [dashboard.md](./dashboard.md)
 
@@ -261,8 +261,8 @@ CREATE TABLE oauth_clients (
 A **Bun workspace monorepo**: one repo, one lockfile, and three deploy entries — Fly.io builds the server from the root `Dockerfile`, Netlify builds `dashboard/` from `netlify.toml`, and the skill is installed by a script (no build). Each environment installs only what it needs (`bun install --filter ...`).
 
 ```
-mcp-memory-server/                    # git repo — Bun workspace monorepo
-├── package.json                      # name "memory-server"; workspaces: ["packages/*", "dashboard"]; root scripts
+sepia/                                # git repo — Bun workspace monorepo
+├── package.json                      # name "sepia"; workspaces: ["packages/*", "dashboard"]; root scripts
 ├── bun.lock                          # ONE lockfile for the whole repo
 ├── tsconfig.json
 ├── Dockerfile                        # ← Fly.io entry: installs ONLY the server's deps (--filter)
@@ -275,7 +275,7 @@ mcp-memory-server/                    # git repo — Bun workspace monorepo
 │   ├── instructions.ts               # The memory contract (system prompt injection)
 │   ├── auth.ts                       # Bearer token check (Phase 1) / OAuth guard (Phase 2)
 │   ├── db.ts                         # Neon Postgres connection + query helpers
-│   ├── tools/                        # 7 tools (schemas imported from @memory/shared)
+│   ├── tools/                        # 7 tools (schemas imported from @sepia/shared)
 │   │   ├── namespace.ts              # manage_namespace tool
 │   │   ├── entity.ts                 # manage_entity tool
 │   │   ├── relation.ts               # manage_relation tool
@@ -294,13 +294,13 @@ mcp-memory-server/                    # git repo — Bun workspace monorepo
 │       └── routes.ts                 # /api/* router (same auth as /mcp)
 ├── packages/
 │   └── shared/                       # ← SHARED types + Valibot schemas (no build step)
-│       ├── package.json              # name "@memory/shared"; "exports": { ".": "./src/index.ts" }
+│       ├── package.json              # name "@sepia/shared"; "exports": { ".": "./src/index.ts" }
 │       └── src/
 │           ├── index.ts              # re-exports
 │           ├── schemas.ts            # Valibot schemas: entity / relation / memory / search
 │           └── types.ts              # constants: memory types, relation types, importance bounds
 ├── dashboard/                        # ← DASHBOARD (deployed by Netlify)
-│   ├── package.json                  # name "memory-dashboard"; depends on @memory/shared
+│   ├── package.json                  # name "sepia-dashboard"; depends on @sepia/shared
 │   ├── svelte.config.js
 │   ├── vite.config.ts
 │   └── src/
@@ -313,14 +313,14 @@ mcp-memory-server/                    # git repo — Bun workspace monorepo
 │       └── lib/
 │           └── api.ts                # fetch wrapper w/ bearer token
 ├── skills/
-│   └── memory/                       # ← SKILL (static; installed by script — no deploy)
+│   └── sepia/                       # ← SKILL (static; installed by script — no deploy)
 │       ├── SKILL.md
 │       └── references/
-│           └── tools.md              # generated from @memory/shared schemas (scripts/gen-skill-ref.ts)
+│           └── tools.md              # generated from @sepia/shared schemas (scripts/gen-skill-ref.ts)
 ├── sql/
 │   └── schema.sql                    # Database schema (above)
 └── scripts/
-    ├── install-skill.sh              # copies skills/memory into the right dir per editor
+    ├── install-skill.sh              # copies skills/sepia into the right dir per editor
     ├── gen-skill-ref.ts              # regenerates references/tools.md from shared schemas
     └── seed.ts                       # optional: demo namespace + sample memories
 ```
@@ -328,7 +328,7 @@ mcp-memory-server/                    # git repo — Bun workspace monorepo
 ```json
 // packages/shared/package.json — types + schemas only, imported as TS directly (no build step)
 {
-  "name": "@memory/shared",
+  "name": "@sepia/shared",
   "version": "0.1.0",
   "type": "module",
   "exports": { ".": "./src/index.ts" },
@@ -336,13 +336,13 @@ mcp-memory-server/                    # git repo — Bun workspace monorepo
 }
 ```
 
-Server and dashboard both depend on it via `"@memory/shared": "workspace:*"`. Bun links it into `node_modules`; the server imports it natively and Vite resolves it in the SvelteKit build — no build step, no bundler config.
+Server and dashboard both depend on it via `"@sepia/shared": "workspace:*"`. Bun links it into `node_modules`; the server imports it natively and Vite resolves it in the SvelteKit build — no build step, no bundler config.
 
 **How each deploy environment picks its entry:**
 
 | Deploy target | Entry | Build | Run |
 | ------------- | ----- | ----- | --- |
-| Fly.io | root `Dockerfile` + `fly.toml` | Docker: `bun install --frozen-lockfile --filter memory-server` | `bun run src/index.ts` |
+| Fly.io | root `Dockerfile` + `fly.toml` | Docker: `bun install --frozen-lockfile` | `bun run src/index.ts` |
 | Netlify | root `netlify.toml` | `bun install` (workspaces) → `cd dashboard && bun run build` | serves `dashboard/build` |
 | Editors (skill) | `scripts/install-skill.sh` | none (static files) | n/a |
 
@@ -357,7 +357,7 @@ Prereqs: `flyctl` installed (`curl -L https://fly.io/install.sh | sh`), logged i
 ### 1.1 Create the app
 
 ```bash
-fly apps create mcp-memory
+fly apps create sepia
 ```
 
 ### 1.2 Dockerfile
@@ -376,7 +376,7 @@ COPY packages/shared/package.json packages/shared/
 COPY dashboard/package.json dashboard/
 
 # 2) Install ONLY the server's deps — SvelteKit/dashboard never enters the image
-RUN bun install --frozen-lockfile --filter memory-server
+RUN bun install --frozen-lockfile
 
 # 3) Source — .dockerignore keeps node_modules, dashboard/build, .git out
 COPY . .
@@ -391,7 +391,7 @@ CMD ["bun", "run", "src/index.ts"]
 ### 1.3 fly.toml
 
 ```toml
-app = "mcp-memory"
+app = "sepia"
 primary_region = "iad"
 
 [build]
@@ -429,11 +429,11 @@ fly secrets set DASHBOARD_PASSWORD="$(openssl rand -hex 16)"   # Phase 1 dashboa
 fly deploy
 
 # Smoke test the MCP endpoint (expect 401 without a token — that's correct)
-curl -i https://mcp-memory.fly.dev/mcp
+curl -i https://sepia.fly.dev/mcp
 
 # With token — expect a JSON-RPC error for a bare POST, or use the inspector:
 npx @modelcontextprotocol/inspector
-# Transport: Streamable HTTP, URL: https://mcp-memory.fly.dev/mcp, headers: Authorization: Bearer <token>
+# Transport: Streamable HTTP, URL: https://sepia.fly.dev/mcp, headers: Authorization: Bearer <token>
 ```
 
 ## Part 2: Setup Neon Postgres
@@ -453,8 +453,8 @@ Also seed the default namespace: `INSERT INTO namespaces (name, description) VAL
 ### 3.1 Scaffold + deps (workspace monorepo)
 
 ```bash
-mkdir mcp-memory-server && cd mcp-memory-server && git init
-bun init -y                              # root package.json → name: "memory-server"
+mkdir sepia && cd sepia && git init
+bun init -y                              # root package.json → name: "sepia"
 # add to root package.json:
 #   "workspaces": ["packages/*", "dashboard"]
 #   scripts: dev / dev:dashboard / deploy:server / deploy:dashboard / install:skill
@@ -462,12 +462,12 @@ bun init -y                              # root package.json → name: "memory-s
 bun add tmcp @tmcp/transport-http @tmcp/adapter-valibot valibot @neondatabase/serverless
 
 mkdir -p packages/shared/src
-cd packages/shared && bun init -y        # name: "@memory/shared", exports ./src/index.ts
+cd packages/shared && bun init -y        # name: "@sepia/shared", exports ./src/index.ts
 cd ../..
 bunx sv create dashboard                 # SvelteKit + adapter-static + Tailwind
 
-bun add @memory/shared@workspace:*       # from repo root: links shared into server
-cd dashboard && bun add @memory/shared@workspace:*   # links shared into dashboard
+bun add @sepia/shared@workspace:*       # from repo root: links shared into server
+cd dashboard && bun add @sepia/shared@workspace:*   # links shared into dashboard
 cd ..
 
 bun install                              # ONE lockfile for the whole repo
@@ -497,7 +497,7 @@ const sql = neon(process.env.DATABASE_URL!);
 export type Db = typeof sql;
 
 const server = new McpServer(
-  { name: "memory", version: "1.0.0" },
+  { name: "sepia", version: "1.0.0" },
   {
     adapter: new ValibotJsonSchemaAdapter(),
     capabilities: { tools: {} },
@@ -518,7 +518,7 @@ const transport = new HttpTransport(server, { path: "/mcp" });
 
 // The Netlify-hosted dashboard calls /api/* cross-origin — allowlist it.
 const ALLOWED_ORIGINS = [
-  "https://memory.svelte-apps.me", // Netlify dashboard (prod)
+  "https://sepia.svelte-apps.me", // Netlify dashboard (prod)
   "http://localhost:5173",         // SvelteKit dev server
 ];
 
@@ -620,7 +620,7 @@ export function requireAuth(request: Request): Response | null {
   if (token === expected) return null;
   return Response.json({ error: "unauthorized" }, {
     status: 401,
-    headers: { "WWW-Authenticate": 'Bearer realm="mcp-memory"' },
+    headers: { "WWW-Authenticate": 'Bearer realm="sepia"' },
   });
 }
 ```
@@ -653,9 +653,9 @@ Phase 2 plan: use `@tmcp/auth` (TMCP's first-party auth package, [tmcp.io/docs/a
 ```json
 {
   "mcpServers": {
-    "memory": {
+    "sepia": {
       "type": "http",
-      "url": "https://mcp-memory.fly.dev/mcp",
+      "url": "https://sepia.fly.dev/mcp",
       "headers": { "Authorization": "Bearer YOUR_TOKEN" }
     }
   }
@@ -665,7 +665,7 @@ Phase 2 plan: use `@tmcp/auth` (TMCP's first-party auth package, [tmcp.io/docs/a
 **Claude Code**:
 
 ```bash
-claude mcp add --transport http memory https://mcp-memory.fly.dev/mcp \
+claude mcp add --transport http sepia https://sepia.fly.dev/mcp \
   --header "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -674,9 +674,9 @@ claude mcp add --transport http memory https://mcp-memory.fly.dev/mcp \
 ```json
 {
   "mcp": {
-    "memory": {
+    "sepia": {
       "type": "http",
-      "url": "https://mcp-memory.fly.dev/mcp",
+      "url": "https://sepia.fly.dev/mcp",
       "headers": { "Authorization": "Bearer YOUR_TOKEN" }
     }
   }
@@ -685,7 +685,7 @@ claude mcp add --transport http memory https://mcp-memory.fly.dev/mcp \
 
 **VS Code Copilot** (`.vscode/mcp.json`): same shape as Cursor.
 
-**Older clients (stdio-only)** — use Fly's shim: `fly mcp proxy https://mcp-memory.fly.dev/mcp` (or `npx mcp-remote` with `--header "Authorization: Bearer ..."`).
+**Older clients (stdio-only)** — use Fly's shim: `fly mcp proxy https://sepia.fly.dev/mcp` (or `npx mcp-remote` with `--header "Authorization: Bearer ..."`).
 
 ### Online AIs (Phase 2 — OAuth; verified support as of mid-2026)
 
@@ -704,7 +704,7 @@ claude mcp add --transport http memory https://mcp-memory.fly.dev/mcp \
 
 Full spec in [dashboard.md](./dashboard.md). Quick summary:
 
-- SvelteKit (`adapter-static`) → `dashboard/build/` → deployed to **Netlify** (free CDN) at `memory.svelte-apps.me`
+- SvelteKit (`adapter-static`) → `dashboard/build/` → deployed to **Netlify** (free CDN) at `sepia.svelte-apps.me`
 - REST API at `/api/*` on Fly (same Bearer token; Phase 2 uses a **PKCE OAuth login** — session cookies can't cross origins)
 - Pages: search/home, entity detail, memories browser, **graph view**, connect-an-AI helper
 - Deploy: `netlify deploy --prod` or Git-connected repo (see dashboard.md); Fly API has a CORS allowlist for the dashboard origin
@@ -713,7 +713,7 @@ Full spec in [dashboard.md](./dashboard.md). Quick summary:
 
 Full skill draft + install matrix in [skill.md](./skill.md). Quick summary:
 
-- Repo path: `skills/memory/SKILL.md` (+ `references/tools.md`)
+- Repo path: `skills/sepia/SKILL.md` (+ `references/tools.md`)
 - Install: `bun run scripts/install-skill.sh` (detects `~/.agents/skills`, `.cursor/skills`, `.claude/skills`, `.codex/skills`)
 - It teaches: when to recall (`search` first), when to persist (`manage_memory`/`manage_entity`/`manage_relation`), importance scoring, dedup-before-write, and what **not** to store
 
@@ -723,7 +723,7 @@ Full skill draft + install matrix in [skill.md](./skill.md). Quick summary:
 | - | --------- | ------------- | ---- |
 | M1 | Server on Fly.io, Bearer auth, 7 tools | Inspector connects; CRUD works end-to-end against Neon | 2 days |
 | M2 | Server instructions + skill | New chat in Claude Code recalls a memory without a reminder prompt; skill works in Zed + Cursor | 1 day |
-| M3 | REST API + SvelteKit dashboard on Netlify (CORS wired) | Browse/search/graph/CRUD from browser at `memory.svelte-apps.me`; stats load | 1.5 days |
+| M3 | REST API + SvelteKit dashboard on Netlify (CORS wired) | Browse/search/graph/CRUD from browser at `sepia.svelte-apps.me`; stats load | 1.5 days |
 | M4 | OAuth 2.1 (`@tmcp/auth`) | `codex mcp login` + inspector OAuth flow succeed; Claude connector works | 1 day |
 | M5 | Online AI rollout | Grok + ChatGPT + Gemini connectors authorized; memory usable from web chats | 0.5 day |
 
@@ -736,7 +736,7 @@ Full skill draft + install matrix in [skill.md](./skill.md). Quick summary:
 | Fly.io (1 shared-cpu 256MB VM, scale-to-zero) | **$0** | Free tier includes 3 such VMs; scale-to-zero = idle costs nothing |
 | Netlify (dashboard, static SPA) | **$0** | Free plan: 300 credits/mo (bandwidth 20/GB, deploy 15 each); a lean SPA uses ~20-60/mo |
 | Neon Postgres free tier | **$0** | 0.5 GB, 100 CU-hours — fine for ~10K memories |
-| Domain (optional) | $0–12/yr | `mcp-memory.fly.dev` + `memory.svelte-apps.me` subdomain are free |
+| Domain (optional) | $0–12/yr | `sepia.fly.dev` + `sepia.svelte-apps.me` subdomain are free |
 | **Total** | **$0** | Always-on variant (`min_machines_running = 1`): ~$1–3/mo |
 
 ## Security & Privacy Notes

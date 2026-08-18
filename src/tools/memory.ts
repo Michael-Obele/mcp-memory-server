@@ -1,6 +1,6 @@
 import type { McpServer } from "tmcp";
 import * as v from "valibot";
-import { MemoryToolInput } from "@memory/shared";
+import { MemoryToolInput } from "@sepia/shared";
 import { db } from "../db.ts";
 import {
   createMemory,

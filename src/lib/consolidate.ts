@@ -3,7 +3,7 @@ import {
   PURGE_AFTER_DAYS,
   STALE_AFTER_DAYS,
   STALE_IMPORTANCE,
-} from "@memory/shared";
+} from "@sepia/shared";
 
 export interface ConsolidateResult {
   archived_stale: number;

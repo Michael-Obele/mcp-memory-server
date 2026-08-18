@@ -18,10 +18,10 @@ A web UI for the memory server: **see** what agents have stored, **search** it, 
 ## Architecture
 
 ```
-Browser (memory.svelte-apps.me)
+Browser (sepia.svelte-apps.me)
    │  static SPA served from Netlify CDN (instant, always warm)
    ▼
-fetch → https://mcp-memory.fly.dev/api/*   (origin CORS-allowlisted)
+fetch → https://sepia.fly.dev/api/*   (origin CORS-allowlisted)
    │  Authorization: Bearer <token> (Phase 1) or PKCE token (Phase 2)
    ▼
 Bun REST handlers (same process + auth as /mcp)
@@ -31,18 +31,18 @@ Neon Postgres (same tables as MCP tools)
 ```
 
 - **Svelte 5 + SvelteKit** with `@sveltejs/adapter-static` (project preference), Tailwind CSS v4
-- **Hosted on Netlify** free plan — global CDN, instant loads, zero cold starts; subdomain `memory.svelte-apps.me` off the existing `svelte-apps.me` domain
+- **Hosted on Netlify** free plan — global CDN, instant loads, zero cold starts; subdomain `sepia.svelte-apps.me` off the existing `svelte-apps.me` domain
 - No SSR: `adapter-static` with `prerender = true` + `fallback: 'index.html'` (SPA mode — data always comes from `/api/*`)
 - The dashboard never touches the Fly VM except for real API calls — the machine stays scaled-to-zero until an agent connects
 
 ## Auth on the dashboard
 
 - **Phase 1**: Bearer token. The dashboard shows a "Sign in" screen that stores the token in `sessionStorage` (on the Netlify origin) and sends it as `Authorization: Bearer ...` on every `/api/*` call. No cookies involved, so the cross-origin request stays simple — only a CORS allowlist is needed on the API.
-- **Phase 2** (with OAuth): **cookies can't cross origins**, so the dashboard uses the **Authorization Code + PKCE** flow as a public client: redirect to the auth server on Fly (`/oauth/authorize`), callback back to `memory.svelte-apps.me/oauth/callback`, exchange the code with the PKCE verifier for an access token, keep it in memory/localStorage, and send it as a Bearer header. The auth server registers the dashboard as a pre-registered public client (PKCE-only, no secret) with the Netlify URL in its allowed redirect URIs. The consent screen stays on Fly.
+- **Phase 2** (with OAuth): **cookies can't cross origins**, so the dashboard uses the **Authorization Code + PKCE** flow as a public client: redirect to the auth server on Fly (`/oauth/authorize`), callback back to `sepia.svelte-apps.me/oauth/callback`, exchange the code with the PKCE verifier for an access token, keep it in memory/localStorage, and send it as a Bearer header. The auth server registers the dashboard as a pre-registered public client (PKCE-only, no secret) with the Netlify URL in its allowed redirect URIs. The consent screen stays on Fly.
 
 **CORS requirements on the Fly API:**
 
-- `Access-Control-Allow-Origin: https://memory.svelte-apps.me` (+ `http://localhost:5173` for dev)
+- `Access-Control-Allow-Origin: https://sepia.svelte-apps.me` (+ `http://localhost:5173` for dev)
 - Allow headers `Authorization`, `Content-Type`; answer `OPTIONS` preflights with `204`
 - No `Access-Control-Allow-Credentials` needed — we never send cookies (the MCP endpoint `/mcp` needs no CORS at all: MCP clients aren't browsers)
 
@@ -139,14 +139,14 @@ The dashboard lives in the **same repo as the server** (Bun workspace monorepo �
   publish = "dashboard/build"
 
 [build.environment]
-  PUBLIC_API_URL = "https://mcp-memory.fly.dev"    # REST API base
-  PUBLIC_MCP_URL = "https://mcp-memory.fly.dev/mcp"  # shown on /connect
+  PUBLIC_API_URL = "https://sepia.fly.dev"    # REST API base
+  PUBLIC_MCP_URL = "https://sepia.fly.dev/mcp"  # shown on /connect
 ```
 
 1. Push the repo to GitHub; create the site in Netlify (New site from Git, base = repo root, build command + publish dir as above — or use `netlify deploy --prod` from the repo root for CLI deploys)
-2. Attach the domain: Netlify → Domain management → add `memory.svelte-apps.me` as a subdomain of the existing `svelte-apps.me` (Let's Encrypt SSL is automatic)
+2. Attach the domain: Netlify → Domain management → add `sepia.svelte-apps.me` as a subdomain of the existing `svelte-apps.me` (Let's Encrypt SSL is automatic)
 3. Add the origin to the Fly API's CORS allowlist (`src/index.ts` `ALLOWED_ORIGINS`)
-4. `dashboard/package.json` is named `memory-dashboard` and depends on `@memory/shared` via `workspace:*` — no separate lockfile, no version drift
+4. `dashboard/package.json` is named `sepia-dashboard` and depends on `@sepia/shared` via `workspace:*` — no separate lockfile, no version drift
 
 **Credit math (Netlify free plan, 2026):** 300 credits/mo hard cap — bandwidth 20 credits/GB, production deploys 15 each, web requests 2 credits/10k. A lean SPA (~150-250KB total, no images) with a few hundred requests/mo lands around **20-60 credits/mo**. Keep the bundle lean; if it ever binds, swap to Cloudflare Pages (500 builds/mo, unlimited bandwidth) — the dashboard code doesn't change, only `PUBLIC_API_URL` and the CORS entry.
 ## SvelteKit notes (Svelte 5 runes)
@@ -174,7 +174,7 @@ export default {
 - [ ] Graph view renders for a seeded demo namespace; clicking a node opens its detail drawer
 - [ ] `DELETE /api/entities/:id` cascades correctly (relations gone, memories unlinked, not deleted)
 - [ ] Dashboard loads instantly on Netlify even while the Fly machine is scaled to zero; API calls wake it (1-2s) and succeed
-- [ ] CORS: `OPTIONS` preflight passes from `memory.svelte-apps.me`; requests from other origins are rejected
+- [ ] CORS: `OPTIONS` preflight passes from `sepia.svelte-apps.me`; requests from other origins are rejected
 - [ ] Phase 2: PKCE login completes from the Netlify origin against the Fly auth server
 
 ## Follow-ups

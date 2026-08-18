@@ -1,6 +1,6 @@
 import type { McpServer } from "tmcp";
 import * as v from "valibot";
-import { RelationToolInput } from "@memory/shared";
+import { RelationToolInput } from "@sepia/shared";
 import { db } from "../db.ts";
 import {
   createRelation,

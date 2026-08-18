@@ -15,7 +15,7 @@ export function requireAuth(request: Request): Response | null {
     { error: "unauthorized" },
     {
       status: 401,
-      headers: { "WWW-Authenticate": 'Bearer realm="mcp-memory"' },
+      headers: { "WWW-Authenticate": 'Bearer realm="sepia"' },
     },
   );
 }

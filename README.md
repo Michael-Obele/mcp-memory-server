@@ -25,7 +25,7 @@ The [official MCP memory server](https://github.com/modelcontextprotocol/servers
 | 🔎 **Search + traversal**  | Unified keyword search across everything; BFS graph traversal from any entity                                                                                                       |
 | 🧹 **`consolidate`**       | Idempotent maintenance sweep: decay-scoring, dedup, purge — pure SQL, no LLM calls                                                                                                  |
 | 📋 **Server instructions** | A usage contract sent in the MCP `initialize` handshake; supporting clients (Claude Code, Codex, Copilot, Goose) inject it into the system prompt — zero-reminder usage             |
-| 🛠️ **Bundled Agent Skill** | `skills/memory/SKILL.md` (agentskills.io standard) — works in Zed, Cursor, Claude Code, Codex, OpenCode; covers editors that ignore `instructions`                                  |
+| 🛠️ **Bundled Agent Skill** | `skills/sepia/SKILL.md` (agentskills.io standard) — works in Zed, Cursor, Claude Code, Codex, OpenCode; covers editors that ignore `instructions`                                   |
 | 🖥️ **Web dashboard**       | Static SPA on Netlify: search, browse, edit, graph view, stats, and a "Connect an AI" page — never wakes the API's scaled-to-zero machine                                           |
 | 🌐 **Online AI support**   | Grok, ChatGPT, Claude web, Gemini (Spark), Perplexity, Le Chat all accept remote MCP connectors — your memory follows you to the web                                                |
 | 🔐 **Two-phase auth**      | Phase 1: static Bearer token (local editors, ~30 min). Phase 2: OAuth 2.1 + PKCE + dynamic client registration via `@tmcp/auth` (required for ChatGPT/Gemini/Grok-style connectors) |
@@ -99,7 +99,7 @@ flowchart LR
 Two complementary channels, one contract (`src/instructions.ts`):
 
 1. **MCP `instructions` field** — the server sends a usage contract in the `initialize` handshake; clients that support it (Claude Code, Codex, VS Code Copilot Chat, Goose, Claude Desktop) inject it into the model's system prompt. The model recalls before working and persists after learning — no reminder prompts.
-2. **Bundled Agent Skill** (`skills/memory/SKILL.md`) — same contract, delivered through the open Agent Skills standard. Works in every editor regardless of `instructions` support. Belt and suspenders.
+2. **Bundled Agent Skill** (`skills/sepia/SKILL.md`) — same contract, delivered through the open Agent Skills standard. Works in every editor regardless of `instructions` support. Belt and suspenders.
 
 The contract teaches: **search before meaningful work**, **persist durable facts** (preferences, decisions, conventions), **prefer update over duplicate**, **link memories to entities**, **score importance 0–1**, and **never store credentials or ephemeral chat content**.
 
@@ -134,14 +134,14 @@ sepia/                                # Bun workspace monorepo
 │   ├── lib/                          # CRUD + search + BFS + decay (shared by tools & API)
 │   └── api/routes.ts                 # /api/* router (same auth as /mcp)
 ├── packages/
-│   └── shared/                       # @memory/shared — Valibot schemas + types, no build step
+│   └── shared/                       # @sepia/shared — Valibot schemas + types, no build step
 │       └── src/{schemas,types}.ts    # single source of truth for tools, API, and dashboard
 ├── dashboard/                        # DASHBOARD (deployed by Netlify)
 │   └── src/routes/                   # search, entities/[id], memories, graph, connect
 ├── skills/
 │   └── memory/                       # SKILL (static, installed by script)
 │       ├── SKILL.md
-│       └── references/tools.md       # generated from @memory/shared schemas
+│       └── references/tools.md       # generated from @sepia/shared schemas
 ├── sql/schema.sql                    # namespaces · entities · relations · memories · oauth_clients
 └── scripts/
     ├── install-skill.sh              # copies the skill into every editor dir it finds
@@ -149,7 +149,7 @@ sepia/                                # Bun workspace monorepo
     └── seed.ts                       # demo namespace + sample memories
 ```
 
-`@memory/shared` is imported as TypeScript directly (no build step) by both the server (Bun) and the dashboard (Vite) — the dashboard's forms validate against exactly what the server enforces, and the skill reference is generated from the same schemas: three consumers, one source of truth.
+`@sepia/shared` is imported as TypeScript directly (no build step) by both the server (Bun) and the dashboard (Vite) — the dashboard's forms validate against exactly what the server enforces, and the skill reference is generated from the same schemas: three consumers, one source of truth.
 
 ## Getting Started
 
@@ -171,7 +171,7 @@ bun run dev:dashboard
 | `MCP_BEARER_TOKEN`   | Phase 1 auth token for `/mcp` and `/api/*` (`openssl rand -hex 32`) |
 | `DASHBOARD_PASSWORD` | Phase 1 dashboard login (OAuth Phase 2 replaces this)               |
 | `OAUTH_JWK_SECRET`   | Phase 2 OAuth signing key (Fly secret)                              |
-| `PUBLIC_API_URL`     | Dashboard build-time REST base (e.g. `https://sepia.fly.dev`)  |
+| `PUBLIC_API_URL`     | Dashboard build-time REST base (e.g. `https://sepia.fly.dev`)       |
 | `PUBLIC_MCP_URL`     | Dashboard build-time MCP URL shown on `/connect`                    |
 
 ### Database
@@ -260,7 +260,7 @@ Restart your editor to pick it up. Claude Code users can also invoke it on deman
 | ------------------------------------------- | ------------------------------------------------------------------------------------------------ | -------- |
 | M1 — Server on Fly.io, Bearer auth, 7 tools | Inspector connects; CRUD works end-to-end against Neon                                           | 2 days   |
 | M2 — Server instructions + skill            | New chat in Claude Code recalls a memory with zero reminder prompts; skill works in Zed + Cursor | 1 day    |
-| M3 — REST API + dashboard on Netlify        | Browse/search/graph/CRUD at `sepia.svelte-apps.me`; stats load                                  | 1.5 days |
+| M3 — REST API + dashboard on Netlify        | Browse/search/graph/CRUD at `sepia.svelte-apps.me`; stats load                                   | 1.5 days |
 | M4 — OAuth 2.1 (`@tmcp/auth`)               | `codex mcp login` + inspector OAuth flow succeed; Claude connector works                         | 1 day    |
 | M5 — Online AI rollout                      | Grok + ChatGPT + Gemini connectors authorized; memory usable from web chats                      | 0.5 day  |
 
