@@ -3,6 +3,7 @@ import { HttpTransport } from "@tmcp/transport-http";
 import { ValibotJsonSchemaAdapter } from "@tmcp/adapter-valibot";
 import { MEMORY_CONTRACT } from "./instructions.ts";
 import { authEnabled, requireAuth } from "./auth.ts";
+import { handleApi } from "./api.ts";
 import { registerNamespaceTools } from "./tools/namespace.ts";
 import { registerEntityTools } from "./tools/entity.ts";
 import { registerRelationTools } from "./tools/relation.ts";
@@ -110,7 +111,20 @@ Bun.serve({
       return response ?? new Response("Not Found", { status: 404 });
     }
 
-    // /api/* (dashboard REST) lands in M3 — same process, same auth.
+    // /api/* (dashboard REST) — same process, same auth, CORS allowlist.
+    // OPTIONS preflights are answered before auth (browsers don't send the
+    // Authorization header on preflight).
+    if (url.pathname.startsWith("/api")) {
+      if (request.method === "OPTIONS") {
+        const response = await handleApi(request, url);
+        return response ?? new Response("Not Found", { status: 404 });
+      }
+      const auth = requireAuth(request);
+      if (auth) return auth;
+      const response = await handleApi(request, url);
+      return response ?? new Response("Not Found", { status: 404 });
+    }
+
     return new Response("Not Found", { status: 404 });
   },
 });
