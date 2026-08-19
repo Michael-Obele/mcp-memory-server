@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "sepia": {
+      "source": "Michael-Obele/sepia",
+      "sourceType": "github",
+      "skillPath": "skills/sepia/SKILL.md",
+      "computedHash": "b8f37bf44b67baab40d3ce2376448eeb47e91b90b95e7686e06d7ec82c8cfe57"
+    }
+  }
+}
