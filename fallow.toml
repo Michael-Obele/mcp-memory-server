@@ -1,0 +1,128 @@
+# fallow.toml — Sepia memory server (MCP server + SvelteKit dashboard + shared package)
+#
+# Design goals:
+#   1. Suppress fallow false positives for BOTH the dashboard and the MCP server.
+#   2. Keep genuine findings visible (unused deps, complexity hotspots, real dupes).
+#
+# False-positive classes this repo hit (verified against fallow 3.16.0 output):
+#   - shadcn-svelte `ui/**` components are CLI-generated / vendored library code.
+#     Their namespace barrels intentionally export the same short names
+#     (Root/Content/Trigger/...), compound components import from their own
+#     barrel (circular dep), and unused installed sets (dropdown-menu, select,
+#     scroll-area) are expected until a feature uses them.
+#   - Svelte route pages share idiomatic boilerplate (namespace loading,
+#     list-page state, small template fragments). Same-file template repeats
+#     (e.g. incoming/outgoing relation rows) are intentional.
+#   - `pg` is resolved at runtime by drizzle-kit for migrations (see
+#     drizzle.config.ts) — never imported in source.
+#   - `dashboard/src/lib/index.ts` and `packages/shared/index.ts` are scaffold
+#     placeholders (SvelteKit `$lib` stub, bun scaffold stub).
+
+# ---------------------------------------------------------------------------
+# Entry points
+# ---------------------------------------------------------------------------
+# Auto-detection covers everything: `src/index.ts` (MCP server, package.json
+# `main`), `scripts/*.ts` (package.json scripts), `packages/shared/src/index.ts`
+# (package.json `exports`) and dashboard routes (SvelteKit plugin).
+# entry = []
+
+# ---------------------------------------------------------------------------
+# Exclusions
+# ---------------------------------------------------------------------------
+# Files excluded from analysis entirely. Keep this minimal — prefer targeted
+# `overrides` below so real issues in adjacent code stay visible.
+ignorePatterns = [
+    "**/.svelte-kit/**", # SvelteKit build output
+    "**/build/**",       # dashboard static build output
+    "**/drizzle/**",     # generated migrations
+]
+
+# Packages that are always considered used/available even though source never
+# imports them. `pg` is a runtime dependency of drizzle-kit (db:migrate etc.);
+# `@types/bun` is ambient.
+ignoreDependencies = ["pg", "@types/bun"]
+
+# Exports that are intentional public API surface, even when nothing imports
+# them. Suppresses unused-export AND duplicate-export findings for matching
+# files.
+#
+# - shadcn-svelte barrels: every ui/<component>/index.ts exports both short
+#   names (Root, Content, ...) and aliased long names. That's the library's
+#   API shape, not dead code.
+# - remote/index.ts: the dashboard's data-layer barrel — all remotes are
+#   re-exported intentionally so routes import from one place.
+# - src/db.ts `Db`: convenience type re-export from @sepia/shared.
+ignoreExports = [
+    { file = "dashboard/src/lib/components/ui/**", exports = [
+        "*",
+    ] },
+    { file = "dashboard/src/lib/remote/index.ts", exports = [
+        "*",
+    ] },
+    { file = "src/db.ts", exports = [
+        "Db",
+    ] },
+]
+
+# ---------------------------------------------------------------------------
+# Per-path rule overrides
+# ---------------------------------------------------------------------------
+# shadcn-svelte component library: CLI-managed, so unused files/sets, unused
+# type exports and barrel import cycles are expected. (unused-exports and
+# duplicate-exports are already handled via ignoreExports above; note that
+# duplicate-exports is multi-file and CANNOT be disabled per-path.)
+[[overrides]]
+files = ["dashboard/src/lib/components/ui/**"]
+[overrides.rules]
+unused-files = "off"
+unused-types = "off"
+circular-dependencies = "off"
+
+# Scaffold placeholders (comment-only / "Hello via Bun!" stubs). Prefer
+# deleting these files; this keeps the report quiet until then.
+[[overrides]]
+files = ["dashboard/src/lib/index.ts", "packages/shared/index.ts"]
+[overrides.rules]
+unused-files = "off"
+
+# ---------------------------------------------------------------------------
+# Duplication
+# ---------------------------------------------------------------------------
+[duplicates]
+mode = "mild"
+# Only substantial, cross-directory duplication is actionable in a Svelte app:
+#   - minLines = 16 / minTokens = 80 filters out ≤15-line template snippets and
+#     list-page boilerplate (namespace selects, card headers, action rows) that
+#     is idiomatic Svelte, not copy-paste debt.
+#   - skipLocal = true reports cross-directory clones only. This drops the
+#     intentional same-directory variants: the Importance slider + namespace
+#     select + footer row shared by the two dialogs in components/, the
+#     sidebar action-button rows in ui/sidebar/, and same-file repeats
+#     (incoming/outgoing relation rows in entities/[id], the two download
+#     blocks in settings, the repeated select fragment in shared db lib).
+#   - ignore = vendored shadcn code. (Note: the key is `ignore`, not
+#     `ignorePatterns` — the latter is silently ignored in [duplicates].)
+#     Without it, dialog-content.svelte vs sheet-content.svelte is flagged.
+#   - Net effect: 17 clone groups -> 1. The survivor (archive toggle row in
+#     memories list + detail) is a genuine cross-view duplicate; raise
+#     minLines to 18 if you want zero dupes findings.
+minLines = 16
+minTokens = 80
+skipLocal = true
+ignore = ["dashboard/src/lib/components/ui/**"]
+
+# ---------------------------------------------------------------------------
+# Audit gate
+# ---------------------------------------------------------------------------
+# Only fail on issues introduced by a change, not the pre-existing backlog.
+[audit]
+gate = "new-only"
+
+# ---------------------------------------------------------------------------
+# Notes on what is intentionally NOT configured
+# ---------------------------------------------------------------------------
+# - health / complexity thresholds are left at defaults: findings like
+#   `src/api.ts handleApi` (cyc 53) are genuine hotspots, not false positives.
+# - `cytoscape` / `cytoscape-dagre` (unused deps), `valibot` (used by dashboard
+#   remotes but missing from dashboard/package.json) and the two scaffold
+#   stubs above are real findings — fix them in code, don't mask them here.
