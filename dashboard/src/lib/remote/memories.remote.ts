@@ -17,7 +17,8 @@ const MemoryFilters = v.object({
 	namespace: v.optional(v.string()),
 	importance_min: v.optional(v.number()),
 	archived: v.optional(v.boolean(), false),
-	limit: v.optional(v.number(), 20)
+	limit: v.optional(v.number(), 20),
+	offset: v.optional(v.number(), 0)
 });
 
 /** Query memories with filters. */

@@ -20,6 +20,6 @@ export {
 } from './memories.remote';
 export { getRelations, addRelation, removeRelation } from './relations.remote';
 export { searchAll } from './search.remote';
-export { getGraph } from './graph.remote';
+export { getGraph, getFullGraph } from './graph.remote';
 export { runConsolidate } from './consolidate.remote';
 export { exportAll } from './export.remote';

@@ -16,13 +16,14 @@ const EntityFilters = v.object({
 	namespace: v.optional(v.string()),
 	q: v.optional(v.string()),
 	type: v.optional(v.string()),
-	limit: v.optional(v.number(), 20)
+	limit: v.optional(v.number(), 20),
+	offset: v.optional(v.number(), 0)
 });
 
 /** List/filter entities. */
 export const getEntities = query(v.tuple([v.string(), EntityFilters]), async ([token, filters]) => {
 	requireAuth(token);
-	return findEntities(db(), filters.namespace, filters.q, filters.type, filters.limit);
+	return findEntities(db(), filters.namespace, filters.q, filters.type, filters.limit, filters.offset);
 });
 
 /** Full entity detail: entity + linked memories + in/out relations. */
