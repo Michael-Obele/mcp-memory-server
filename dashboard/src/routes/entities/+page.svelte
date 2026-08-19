@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Plus, Search, SlidersHorizontal } from '@lucide/svelte';
+	import { Plus, Search, SlidersHorizontal, LoaderCircle } from '@lucide/svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
@@ -24,8 +24,11 @@
 	let type = $state('');
 	let entities = $state<Awaited<ReturnType<typeof getEntities>>>([]);
 	let loading = $state(true);
+	let loadingMore = $state(false);
+	let hasMore = $state(true);
 	let error = $state('');
 	let showCreate = $state(false);
+	const PAGE_SIZE = 50;
 
 	async function load() {
 		loading = true;
@@ -37,13 +40,38 @@
 					q: q || undefined,
 					namespace: namespace === 'all' ? undefined : namespace,
 					type: type || undefined,
-					limit: 50
+					limit: PAGE_SIZE
 				}
 			]);
+			hasMore = entities.length >= PAGE_SIZE;
 		} catch (e) {
 			error = (e as Error)?.message ?? 'Failed to load entities';
 		} finally {
 			loading = false;
+		}
+	}
+
+	async function loadMore() {
+		if (loadingMore) return;
+		loadingMore = true;
+		error = '';
+		try {
+			const next = await getEntities([
+				auth.token,
+				{
+					q: q || undefined,
+					namespace: namespace === 'all' ? undefined : namespace,
+					type: type || undefined,
+					limit: PAGE_SIZE,
+					offset: entities.length
+				}
+			]);
+			entities = [...entities, ...next];
+			hasMore = next.length >= PAGE_SIZE;
+		} catch (e) {
+			error = (e as Error)?.message ?? 'Failed to load more entities';
+		} finally {
+			loadingMore = false;
 		}
 	}
 
@@ -136,33 +164,46 @@
 			</CardContent>
 		</Card>
 	{:else}
-		<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-			{#each entities as e}
-				<Card>
-					<CardContent class="p-4">
-						<div class="flex items-start justify-between gap-2">
-							<a href={`/entities/${e.id}`} class="min-w-0 flex-1">
-								<p class="truncate text-sm font-medium">{e.name}</p>
-								<p class="mt-1 line-clamp-2 text-xs text-muted-foreground">
-									{truncate(e.summary ?? '', 120)}
-								</p>
-								<div class="mt-2 flex flex-wrap items-center gap-2">
-									<Badge class={entityTypeBadge(e.type)}>{e.type}</Badge>
-									<span class="text-xs text-muted-foreground">{importancePct(e.importance)}%</span>
-								</div>
-							</a>
-							<Button
-								variant="ghost"
-								size="icon"
-								onclick={() => del(String(e.id))}
-								aria-label="Delete entity"
-							>
-								<Trash2 class="size-4 text-destructive" />
-							</Button>
-						</div>
-					</CardContent>
-				</Card>
-			{/each}
+		<div class="space-y-3">
+			<p class="text-xs text-muted-foreground">
+				Showing {entities.length} entities{hasMore ? ' — load more to see the rest' : ''}
+			</p>
+			<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+				{#each entities as e}
+					<Card>
+						<CardContent class="p-4">
+							<div class="flex items-start justify-between gap-2">
+								<a href={`/entities/${e.id}`} class="min-w-0 flex-1">
+									<p class="truncate text-sm font-medium">{e.name}</p>
+									<p class="mt-1 line-clamp-2 text-xs text-muted-foreground">
+										{truncate(e.summary ?? '', 120)}
+									</p>
+									<div class="mt-2 flex flex-wrap items-center gap-2">
+										<Badge class={entityTypeBadge(e.type)}>{e.type}</Badge>
+										<span class="text-xs text-muted-foreground">{importancePct(e.importance)}%</span>
+									</div>
+								</a>
+								<Button
+									variant="ghost"
+									size="icon"
+									onclick={() => del(String(e.id))}
+									aria-label="Delete entity"
+								>
+									<Trash2 class="size-4 text-destructive" />
+								</Button>
+							</div>
+						</CardContent>
+					</Card>
+				{/each}
+			</div>
+			{#if hasMore}
+				<div class="flex justify-center pt-2">
+					<Button variant="outline" onclick={loadMore} disabled={loadingMore}>
+						{#if loadingMore}<LoaderCircle class="size-4 animate-spin" />{/if}
+						Load more
+					</Button>
+				</div>
+			{/if}
 		</div>
 	{/if}
 

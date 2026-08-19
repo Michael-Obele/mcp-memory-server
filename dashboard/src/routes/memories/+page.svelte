@@ -1,5 +1,13 @@
 <script lang="ts">
-	import { Plus, Trash2, Archive, ArchiveRestore, Search, SlidersHorizontal } from '@lucide/svelte';
+	import {
+		Plus,
+		Trash2,
+		Archive,
+		ArchiveRestore,
+		Search,
+		SlidersHorizontal,
+		LoaderCircle
+	} from '@lucide/svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
@@ -29,9 +37,12 @@
 	let q = $state('');
 	let minImportance = $state(0);
 	let limit = $state(20);
+	let offset = $state(0);
 
 	let memories = $state<Awaited<ReturnType<typeof getMemories>>>([]);
 	let loading = $state(true);
+	let loadingMore = $state(false);
+	let hasMore = $state(true);
 	let error = $state('');
 
 	let showCreate = $state(false);
@@ -39,6 +50,7 @@
 	async function load() {
 		loading = true;
 		error = '';
+		offset = 0;
 		try {
 			memories = await getMemories([
 				auth.token,
@@ -50,13 +62,44 @@
 					namespace: namespace === 'all' ? undefined : namespace,
 					archived,
 					importance_min: minImportance > 0 ? minImportance : undefined,
-					limit
+					limit,
+					offset: 0
 				}
 			]);
+			hasMore = memories.length >= limit;
 		} catch (e) {
 			error = (e as Error)?.message ?? 'Failed to load memories';
 		} finally {
 			loading = false;
+		}
+	}
+
+	async function loadMore() {
+		if (loadingMore) return;
+		loadingMore = true;
+		error = '';
+		try {
+			const next = await getMemories([
+				auth.token,
+				{
+					type:
+						type === 'all'
+							? undefined
+							: (type as 'fact' | 'observation' | 'preference' | 'instruction'),
+					namespace: namespace === 'all' ? undefined : namespace,
+					archived,
+					importance_min: minImportance > 0 ? minImportance : undefined,
+					limit,
+					offset: offset + limit
+				}
+			]);
+			memories = [...memories, ...next];
+			offset += limit;
+			hasMore = next.length >= limit;
+		} catch (e) {
+			error = (e as Error)?.message ?? 'Failed to load more memories';
+		} finally {
+			loadingMore = false;
 		}
 	}
 
@@ -175,6 +218,9 @@
 		</Card>
 	{:else}
 		<div class="space-y-2">
+			<p class="text-xs text-muted-foreground">
+				Showing {memories.length} memories{hasMore ? ' — load more to see the rest' : ''}
+			</p>
 			{#each memories as m}
 				<Card>
 					<CardContent class="p-4">
@@ -219,6 +265,14 @@
 					</CardContent>
 				</Card>
 			{/each}
+			{#if hasMore}
+				<div class="flex justify-center pt-2">
+					<Button variant="outline" onclick={loadMore} disabled={loadingMore}>
+						{#if loadingMore}<LoaderCircle class="size-4 animate-spin" />{/if}
+						Load more
+					</Button>
+				</div>
+			{/if}
 		</div>
 	{/if}
 
