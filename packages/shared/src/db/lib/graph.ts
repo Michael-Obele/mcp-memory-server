@@ -127,3 +127,39 @@ export async function traverseGraph(
     depth_reached: depthReached,
   };
 }
+
+/**
+ * The entire knowledge graph: every entity as a node and every relation as
+ * an edge. Same shape as `traverseGraph` (`depth_reached` is 0 — this is not
+ * a traversal). Powers the dashboard's Obsidian-style "full graph" view.
+ */
+export async function fullGraph(db: Db): Promise<GraphResult> {
+  const [entityRows, relationRows] = await Promise.all([
+    db.select().from(entities),
+    db.execute(sql`
+      SELECT r.id, r.source_id, r.target_id, r.relation_type, r.weight,
+             s.name AS source_name, s.type AS source_type, s.importance AS source_importance,
+             t.name AS target_name, t.type AS target_type, t.importance AS target_importance
+      FROM ${relations} r
+      JOIN ${entities} s ON s.id = r.source_id
+      JOIN ${entities} t ON t.id = r.target_id
+    `),
+  ]);
+
+  const nodes: GraphNode[] = entityRows.map((e) => ({
+    id: e.id,
+    label: e.name,
+    type: e.type,
+    importance: e.importance ?? 0.5,
+  }));
+
+  const edges: GraphEdge[] = (relationRows.rows as Array<Record<string, unknown>>).map((r) => ({
+    id: String(r.id),
+    source: String(r.source_id),
+    target: String(r.target_id),
+    label: String(r.relation_type),
+    weight: Number(r.weight),
+  }));
+
+  return { nodes, edges, depth_reached: 0 };
+}

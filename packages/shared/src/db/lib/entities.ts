@@ -152,6 +152,7 @@ export async function findEntities(
   query: string | undefined,
   type: string | undefined,
   limit = 10,
+  offset = 0,
 ) {
   const conditions = [];
   if (query !== undefined) {
@@ -173,5 +174,6 @@ export async function findEntities(
     .innerJoin(namespaces, eq(namespaces.id, entities.namespaceId))
     .where(conditions.length ? and(...conditions) : undefined)
     .orderBy(desc(entities.importance), desc(entities.updatedAt))
-    .limit(Math.min(limit, 10));
+    .limit(Math.min(limit, 10000))
+    .offset(Math.max(offset, 0));
 }

@@ -202,6 +202,7 @@ export interface MemoryQueryFilters {
   importance_min?: number;
   archived?: boolean;
   limit?: number;
+  offset?: number;
 }
 
 /** Query memories: ordered by importance DESC, then updated_at DESC. */
@@ -217,7 +218,8 @@ export async function queryMemories(db: Db, filters: MemoryQueryFilters = {}) {
   if (filters.importance_min !== undefined) {
     conditions.push(gte(memories.importance, filters.importance_min));
   }
-  const limit = Math.min(filters.limit ?? 20, 50);
+  const limit = Math.min(filters.limit ?? 20, 10000);
+  const offset = Math.max(filters.offset ?? 0, 0);
   return db
     .select({
       ...getTableColumns(memories),
@@ -227,5 +229,6 @@ export async function queryMemories(db: Db, filters: MemoryQueryFilters = {}) {
     .innerJoin(namespaces, eq(namespaces.id, memories.namespaceId))
     .where(and(...conditions))
     .orderBy(desc(memories.importance), desc(memories.updatedAt))
-    .limit(limit);
+    .limit(limit)
+    .offset(offset);
 }
