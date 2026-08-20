@@ -6,6 +6,17 @@
 	import { auth, isAuthed } from '$lib/auth.svelte';
 	import { getToken } from '$lib/session.svelte';
 	import SignIn from '$lib/components/sign-in.svelte';
+	import { Agentation, type AnnotationProps, type KeyBindings } from 'sv-agentation';
+	import { browser, dev } from '$app/environment';
+
+	let playgroundAnnotationProps: AnnotationProps = {
+		toolbarPosition: 'bottom-left',
+		outputMode: 'forensic',
+		pauseAnimations: true,
+		clearOnCopy: true,
+		includeComponentContext: false,
+		includeComputedStyles: false
+	};
 
 	let { children } = $props();
 
@@ -36,3 +47,7 @@
 {/if}
 
 <Toaster />
+
+{#if browser && dev}
+	<Agentation {...playgroundAnnotationProps} />
+{/if}

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Search, LoaderCircle, ChevronDown, Check } from '@lucide/svelte';
+	import { Search, LoaderCircle, ChevronDown, ChevronRight, Check } from '@lucide/svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Card, CardContent } from '$lib/components/ui/card/index.js';
@@ -86,6 +86,7 @@
 	let moved = $state(false);
 	let hoveredId = $state<string | null>(null);
 	let typeFilter = $state<Set<string>>(new Set());
+	let legendOpen = $state(false);
 
 	// Pick a default root: the ?focus= param (→ focus mode), else the
 	// most-accessed entity (used if the user switches to focus mode).
@@ -376,7 +377,7 @@
 	<Card>
 		<CardContent class="p-0">
 			{#if loading}
-				<Skeleton class="h-120 w-full rounded-none" />
+				<Skeleton class="min-h-100 w-full rounded-none" />
 			{:else if graphData && visibleNodes.length > 0}
 				<div class="relative">
 					<Chart
@@ -387,7 +388,8 @@
 							motion: { type: 'tween', duration: 300 }
 						}}
 						clip
-						height={480}
+						height={640}
+						class="max-h-[80vh] min-h-100"
 						{onResize}
 					>
 						{#snippet children({ context })}
@@ -502,26 +504,9 @@
 							</Tooltip.Root>
 						{/snippet}
 					</Chart>
-
-					<div
-						class="absolute bottom-3 left-3 z-10 flex items-center gap-3 rounded-md bg-background/90 p-2 text-xs text-muted-foreground"
-					>
-						<span>
-							{visibleNodes.length} nodes · {visibleLinks.length} edges
-							{#if mode === 'full'}· full graph{:else}· depth {graphData.depth_reached}{/if}
-						</span>
-						<span class="flex items-center gap-2">
-						{#each allTypes as type (type)}
-							<span class="flex items-center gap-1">
-								<span class="size-2 rounded-full" style:background={nodeColor(type)}></span>
-									{type}
-								</span>
-							{/each}
-						</span>
-					</div>
 				</div>
 			{:else}
-				<div class="flex h-120 items-center justify-center text-sm text-muted-foreground">
+				<div class="flex min-h-100 items-center justify-center text-sm text-muted-foreground">
 					{#if mode === 'full'}
 						No entities match the selected types.
 					{:else}
@@ -531,4 +516,63 @@
 			{/if}
 		</CardContent>
 	</Card>
+
+	{#if graphData && visibleNodes.length > 0}
+		<Card>
+			<CardContent class="flex flex-wrap items-center gap-3 p-3">
+				<!-- Stats badges -->
+				<div class="flex flex-wrap items-center gap-1.5">
+					<Badge variant="secondary" class="font-mono tabular-nums">
+						{visibleNodes.length} nodes
+					</Badge>
+					<Badge variant="secondary" class="font-mono tabular-nums">
+						{visibleLinks.length} edges
+					</Badge>
+					{#if mode === 'focus'}
+						<Badge variant="outline" class="text-muted-foreground">
+							depth {graphData.depth_reached}
+						</Badge>
+					{/if}
+				</div>
+
+				<!-- Type legend -->
+				{#if allTypes.length > 0}
+					<div class="flex items-center gap-2">
+						{#if allTypes.length > 5}
+							<button
+								type="button"
+								onclick={() => (legendOpen = !legendOpen)}
+								class="flex items-center gap-1 text-muted-foreground transition-colors hover:text-foreground"
+							>
+								{#if legendOpen}
+									<ChevronDown class="size-3" />
+								{:else}
+									<ChevronRight class="size-3" />
+								{/if}
+								<span class="font-medium">{allTypes.length} types</span>
+							</button>
+						{/if}
+						{#if legendOpen || allTypes.length <= 5}
+							<div class="flex flex-wrap gap-1.5">
+								{#each allTypes as type (type)}
+									<button
+										type="button"
+										onclick={() => toggleType(type)}
+										class="flex items-center gap-1.5 rounded-md border px-2 py-0.5 transition-colors hover:bg-accent {typeFilter.size >
+											0 && !typeFilter.has(type)
+											? 'opacity-40'
+											: ''}"
+									>
+										<span class="size-2 shrink-0 rounded-full" style:background={nodeColor(type)}
+										></span>
+										<span class="whitespace-nowrap">{type}</span>
+									</button>
+								{/each}
+							</div>
+						{/if}
+					</div>
+				{/if}
+			</CardContent>
+		</Card>
+	{/if}
 </div>
