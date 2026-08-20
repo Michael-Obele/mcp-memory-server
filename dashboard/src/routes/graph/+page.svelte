@@ -48,29 +48,23 @@
 
 	// Deterministic color for arbitrary/custom entity types so every node in
 	// the full graph gets a distinct hue (Obsidian-style).
-	const typePalette = [
-		'#f43f5e',
-		'#0ea5e9',
-		'#14b8a6',
-		'#6366f1',
-		'#a855f7',
-		'#f59e0b',
-		'#84cc16',
-		'#06b6d4',
-		'#ec4899',
-		'#8b5cf6',
-		'#f97316',
-		'#10b981'
-	];
+	const GOLDEN_ANGLE = 137.508;
 
-	function hashString(s: string): number {
-		let h = 0;
-		for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
-		return h;
+	function typeHsl(type: string, index: number): string {
+		if (type in typeColors) return typeColors[type];
+		const hue = (index * GOLDEN_ANGLE) % 360;
+		return `hsl(${hue}, 70%, 55%)`;
 	}
 
+	// Build a deterministic color map for every type in the current graph.
+	const typeColorMap = $derived.by(() => {
+		const m = new Map<string, string>();
+		allTypes.forEach((t, i) => m.set(t, typeHsl(t, i)));
+		return m;
+	});
+
 	function nodeColor(type: string): string {
-		return typeColors[type] ?? typePalette[hashString(type) % typePalette.length];
+		return typeColorMap.get(type) ?? typeColors[type] ?? 'hsl(0, 0%, 60%)';
 	}
 
 	function nodeRadius(n: { importance?: number }): number {
@@ -517,9 +511,9 @@
 							{#if mode === 'full'}· full graph{:else}· depth {graphData.depth_reached}{/if}
 						</span>
 						<span class="flex items-center gap-2">
-							{#each Object.entries(typeColors) as [type, color] (type)}
-								<span class="flex items-center gap-1">
-									<span class="size-2 rounded-full" style:background={color}></span>
+						{#each allTypes as type (type)}
+							<span class="flex items-center gap-1">
+								<span class="size-2 rounded-full" style:background={nodeColor(type)}></span>
 									{type}
 								</span>
 							{/each}
