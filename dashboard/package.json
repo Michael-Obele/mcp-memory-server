@@ -38,7 +38,7 @@
 	},
 	"dependencies": {
 		"@layerstack/tailwind": "^1.0.1",
-		"@layerstack/utils": "^1.0.1",
+		"@layerstack/utils": "2.0.0-next.19",
 		"@lucide/svelte": "^1.32.0",
 		"@sepia/shared": "workspace:*",
 		"@sveltejs/adapter-netlify": "^6.0.4",
