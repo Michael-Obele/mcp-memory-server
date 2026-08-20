@@ -225,7 +225,7 @@
 				<Card>
 					<CardContent class="p-4">
 						<div class="flex items-start justify-between gap-3">
-							<a href={`/memories/${m.id}`} class="min-w-0 flex-1">
+							<a href={`/app/memories/${m.id}`} class="min-w-0 flex-1">
 								<p class="text-sm">{truncate(m.content, 300)}</p>
 								<div class="mt-2 flex flex-wrap items-center gap-2">
 									<Badge class={TYPE_BADGE[m.type as keyof typeof TYPE_BADGE] ?? ''}>{m.type}</Badge

@@ -173,7 +173,7 @@
 					<Card>
 						<CardContent class="p-4">
 							<div class="flex items-start justify-between gap-2">
-								<a href={`/entities/${e.id}`} class="min-w-0 flex-1">
+								<a href={`/app/entities/${e.id}`} class="min-w-0 flex-1">
 									<p class="truncate text-sm font-medium">{e.name}</p>
 									<p class="mt-1 line-clamp-2 text-xs text-muted-foreground">
 										{truncate(e.summary ?? '', 120)}

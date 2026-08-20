@@ -48,7 +48,7 @@
 		if (!confirm('Delete this memory permanently?')) return;
 		await removeMemory([auth.token, params.id]);
 		toast.success('Memory deleted');
-		goto('/memories');
+		goto('/app/memories');
 	}
 
 	async function toggleArchive(m: { archived: boolean | null }) {
@@ -61,7 +61,7 @@
 <svelte:head><title>Sepia — Memory</title></svelte:head>
 
 <div class="space-y-4">
-	<Button variant="ghost" onclick={() => goto('/memories')} class="gap-1">
+		<Button variant="ghost" onclick={() => goto('/app/memories')} class="gap-1">
 		<ArrowLeft class="size-4" /> Back to memories
 	</Button>
 
@@ -122,7 +122,7 @@
 							<p class="mb-2 text-xs text-muted-foreground">Linked entities</p>
 							<div class="flex flex-wrap gap-2">
 								{#each m.entities as e}
-									<a href={`/entities/${e.id}`}>
+									<a href={`/app/entities/${e.id}`}>
 										<Badge variant="outline" class="hover:bg-accent">{e.name}</Badge>
 									</a>
 								{/each}

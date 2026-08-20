@@ -454,7 +454,7 @@
 													}}
 													onclick={() => {
 														if (moved) return;
-														goto(`/entities/${node.id}`);
+														goto(`/app/entities/${node.id}`);
 													}}
 													onpointerenter={() => (hoveredId = node.id)}
 													onpointerleave={() => {

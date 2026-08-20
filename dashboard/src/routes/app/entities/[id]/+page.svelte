@@ -51,7 +51,7 @@
 			return;
 		await removeEntity([auth.token, entityId]);
 		toast.success('Entity deleted');
-		goto('/entities');
+		goto('/app/entities');
 	}
 
 	async function delMemory(id: string) {
@@ -113,7 +113,7 @@
 <svelte:head><title>Sepia — Entity</title></svelte:head>
 
 <div class="space-y-4">
-	<Button variant="ghost" onclick={() => goto('/entities')} class="gap-1">
+		<Button variant="ghost" onclick={() => goto('/app/entities')} class="gap-1">
 		<ArrowLeft class="size-4" /> Back to entities
 	</Button>
 
@@ -137,7 +137,7 @@
 						<Button
 							variant="outline"
 							size="sm"
-							onclick={() => goto(`/graph?focus=${e.id}`)}
+							onclick={() => goto(`/app/graph?focus=${e.id}`)}
 							class="gap-1"
 						>
 							<Network class="size-4" /> Graph
@@ -188,7 +188,7 @@
 							<Card>
 								<CardContent class="p-4">
 									<div class="flex items-start justify-between gap-3">
-										<a href={`/memories/${m.id}`} class="min-w-0 flex-1">
+										<a href={`/app/memories/${m.id}`} class="min-w-0 flex-1">
 											<p class="text-sm">{truncate(m.content, 250)}</p>
 											<div class="mt-2 flex items-center gap-2">
 												<Badge class={TYPE_BADGE[m.type as keyof typeof TYPE_BADGE] ?? ''}
@@ -301,7 +301,7 @@
 									<div
 										class="flex items-center justify-between gap-2 rounded-md p-2 hover:bg-accent"
 									>
-										<a href={`/entities/${r.other_id}`} class="flex min-w-0 items-center gap-2">
+									<a href={`/app/entities/${r.other_id}`} class="flex min-w-0 items-center gap-2">
 											<span class="text-sm font-medium">{e.name}</span>
 											<span class="text-xs text-muted-foreground">—{r.relation_type}→</span>
 											<span class="truncate text-sm font-medium">{r.other_name}</span>
@@ -333,7 +333,7 @@
 									<div
 										class="flex items-center justify-between gap-2 rounded-md p-2 hover:bg-accent"
 									>
-										<a href={`/entities/${r.other_id}`} class="flex min-w-0 items-center gap-2">
+									<a href={`/app/entities/${r.other_id}`} class="flex min-w-0 items-center gap-2">
 											<span class="truncate text-sm font-medium">{r.other_name}</span>
 											<span class="text-xs text-muted-foreground">—{r.relation_type}→</span>
 											<span class="text-sm font-medium">{e.name}</span>

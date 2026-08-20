@@ -15,16 +15,16 @@
 	import { goto } from '$app/navigation';
 
 	const nav = [
-		{ href: '/', label: 'Search', icon: Search },
-		{ href: '/memories', label: 'Memories', icon: Layers },
-		{ href: '/entities', label: 'Entities', icon: Boxes },
-		{ href: '/graph', label: 'Graph', icon: Network },
-		{ href: '/connect', label: 'Connect an AI', icon: Plug },
-		{ href: '/settings', label: 'Settings', icon: Settings }
+		{ href: '/app', label: 'Search', icon: Search },
+		{ href: '/app/memories', label: 'Memories', icon: Layers },
+		{ href: '/app/entities', label: 'Entities', icon: Boxes },
+		{ href: '/app/graph', label: 'Graph', icon: Network },
+		{ href: '/app/connect', label: 'Connect an AI', icon: Plug },
+		{ href: '/app/settings', label: 'Settings', icon: Settings }
 	];
 
 	function isActive(href: string) {
-		if (href === '/') return page.url.pathname === '/';
+		if (href === '/app') return page.url.pathname === '/app';
 		return page.url.pathname.startsWith(href);
 	}
 
@@ -40,7 +40,7 @@
 			<Sidebar.MenuItem>
 				<Sidebar.MenuButton size="lg" class="gap-2">
 					{#snippet child({ props })}
-						<a href="/" {...props}>
+						<a href="/app" {...props}>
 							<div
 								class="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground"
 							>
