@@ -4,16 +4,17 @@
 # via @sepia/shared — no REST API round-trip.
 
 [build]
-  command = "cd dashboard && bun run build"
-  publish = "dashboard/build"
+base = "dashboard"
+command = "bun run build"
+publish = "build"
 
 [functions]
-  directory = "dashboard/.netlify/functions-internal"
+directory = ".netlify/functions-internal"
 
 [build.environment]
-  # The dashboard's remote functions need the same DATABASE_URL as the server.
-  # Set these in the Netlify UI (Site settings → Environment variables) instead
-  # of committing secrets:
-  #   DATABASE_URL      — Neon Postgres connection string
-  #   DASHBOARD_TOKEN   — token the sign-in screen validates against
-  #                       (falls back to MCP_BEARER_TOKEN if unset)
+# The dashboard's remote functions need the same DATABASE_URL as the server.
+# Set these in the Netlify UI (Site settings → Environment variables) instead
+# of committing secrets:
+#   DATABASE_URL      — Neon Postgres connection string
+#   DASHBOARD_TOKEN   — token the sign-in screen validates against
+#                       (falls back to MCP_BEARER_TOKEN if unset)
