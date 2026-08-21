@@ -1,10 +1,59 @@
+<!--
+  Sepia — self-hosted memory server for AI coding agents.
+
+  A two-hemisphere brain (memory) whose right hemisphere carries a circuit
+  (AI), in warm amber — the product is named after the colour.
+
+  GEOMETRY
+  Built on Lucide's `brain-circuit` (ISC), whose brain is a sagittal HALF brain:
+  four arcs (r=3,4,4,4) bulging left off a straight midline at x=12. That half
+  is mirrored about the midline and joined into one closed path, giving a full
+  18x20 two-hemisphere mass. Reflection flips an SVG arc's sweep flag and
+  reversal flips it back, so the mirrored flags equal the originals and the two
+  halves join seamlessly — no seam down the middle.
+
+  Mirroring is what makes the mark work at 16px. The half brain is 9x20, so
+  beside a circuit it took under half the width and read as a comb; the full
+  brain is nearly square and holds the frame, which matches the intended
+  priority order (brain first, circuit second). Keeping the circuit INSIDE the
+  right hemisphere also means the mark has no external appendage — anything
+  protruding from a rounded mass reads as a handle, spout or prong.
+
+  PROPORTIONS (phi, where it earns its place)
+    ink box            28 x 28 in a 32 viewBox -> 2 units padding all round
+    hemisphere ratio   R:L = 1.094 — the midline sits at x=11.55 rather than 12.
+                       A mirror is exactly symmetric, which reads as manufactured;
+                       real brains are asymmetric this way. One parameter, and a
+                       ratio subtle enough to feel organic rather than designed.
+    trace spacing      7.0 units in 24-space = 8.9 at 32px. Three traces at 4.4
+                       left 2.1 units of gap (0.7 device px at 16px) and filled
+                       in solid; two at 7.0 leave 4.7 (1.6 device px at 16px).
+    node radius        1.45 (24-space) = 1.85 at 32px, dia 3.7 — 1.3x the stroke,
+                       so a pad reads as a pad and not as a thicker line.
+    node clearance     measured, not assumed: the hemisphere cavity's inner wall
+                       is at x=24.70 (32-space) beside the upper trace and 26.00
+                       beside the lower, so the pads are staggered (17.45 / 18.45)
+                       to keep ~1.2 units clear of the contour at both rows.
+                       Equal x merged the upper pad into the outline at 48px.
+
+  STROKE, NOT FILL
+  Rendered at 16/32/48px, a 2.9px stroke beat every filled silhouette tested.
+  A filled amber lump at 16px is a lump; a stroke this thick antialiases to a
+  solid ~1.5 device px line and the interior voids supply the figure/ground
+  articulation that makes the lobes and the circuit readable at all.
+
+  COLOUR — one flat tone. No gradients, filters, text or shadows.
+    #D4956A  oklch(0.72 0.10 60)   6.9:1 on #1a1a1a, 2.5:1 on white
+  A single tone is deliberate: two amber tones close enough to stay in-palette
+  are only ~1.6:1 apart, which mushes into mottling on downscale.
+-->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <g transform="translate(-0.5455 -1.2727) scale(1.2727)" fill="none" stroke="#D4956A" stroke-width="2.28" stroke-linecap="round" stroke-linejoin="round">
+  <g transform="translate(-0.5455 0.7273) scale(1.272727)" fill="none" stroke="#D4956A" stroke-width="2.28" stroke-linecap="round" stroke-linejoin="round">
     <path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18A4 4 0 1 0 19.967 17.483A4 4 0 0 0 20.523 10.895A4 4 0 0 0 17.997 5.125A3 3 0 1 0 12 5Z"/>
     <path d="M11.55 18.4V4.9"/>
-    <path d="M13.15 9.9H17.0"/>
-    <path d="M13.15 16.9H16.9"/>
-    <circle cx="18.55" cy="9.9" r="1.55" fill="#D4956A"/>
-    <circle cx="18.45" cy="16.9" r="1.55" fill="#D4956A"/>
+    <path d="M13.15 9.9H16.00"/>
+    <path d="M13.15 16.9H17.00"/>
+    <circle cx="17.45" cy="9.9" r="1.45" fill="#D4956A"/>
+    <circle cx="18.45" cy="16.9" r="1.45" fill="#D4956A"/>
   </g>
 </svg>
