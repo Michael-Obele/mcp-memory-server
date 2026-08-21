@@ -1,29 +1,39 @@
 ---
-title: The Bundled Agent Skill
+title: The Bundled Agent Skill + Always-On Instructions
 status: in-progress
 ---
 
-# The Bundled Agent Skill
+# The Bundled Agent Skill + Always-On Instructions
 
-The memory server ships with an **Agent Skill** — a `SKILL.md` following the [Open Agent Skills standard](https://agentskills.io) — so that **any AI editor** (Zed, Cursor, Claude Code, Codex, OpenCode) uses the memory server correctly without the user pasting instructions. It's the explicit companion to the MCP `instructions` field: server instructions are injected automatically by clients that support them; the skill covers every editor, every time.
+The memory server ships with an **Agent Skill** (`SKILL.md`, [Open Agent Skills standard](https://agentskills.io)) **plus per-editor always-on instruction files** (`always-on/`) so that **any AI editor** (Zed, Cursor, Claude Code, Codex, OpenCode, VS Code Copilot) uses the memory server correctly without the user pasting instructions.
 
-## Why both mechanisms?
+## Why three mechanisms?
 
-| Mechanism | How it reaches the model | Coverage | Notes |
-| --------- | ------------------------ | -------- | ----- |
-| MCP `instructions` field | Sent in `initialize` handshake → client injects into system prompt | Claude Code, Codex, VS Code Copilot Chat, Goose, Claude Desktop | Zero setup, but client-dependent ([source](https://blog.modelcontextprotocol.io/posts/2025-11-03-using-server-instructions/)) |
-| Agent Skill (`SKILL.md`) | Editor lists skill name+description at startup; loads full body when relevant | Zed, Cursor, Claude Code, Codex, OpenCode, any agentskills.io-compliant editor | Works everywhere; needs a one-time install (`install-skill.sh`) |
+Skills are **on-demand by design** in every platform: the editor lists the skill's name + description at session start, but the full body loads only when the model decides it's relevant (or the user invokes `/sepia`). That's fine for reference material, but it can't _force_ memory usage. The always-on channels can:
 
-Same contract, two delivery channels. If the client supports `instructions`, the model knows the contract before the first message. If it doesn't, the skill's `description` makes the agent load the contract when memory is relevant.
+| Mechanism                                  | How it reaches the model                                                                                                                                                                   | Coverage                                                                       | Notes                                                                                                                                             |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| MCP `instructions` field                   | Sent in `initialize` handshake → client injects into system prompt                                                                                                                         | Claude Code, Codex, VS Code Copilot Chat, Goose, Claude Desktop                | Zero setup, but client-dependent — **Cursor varies** ([source](https://blog.modelcontextprotocol.io/posts/2025-11-03-using-server-instructions/)) |
+| Always-on instruction files (`always-on/`) | Editor's own instruction system injects into **every** session: VS Code `*.instructions.md` (`applyTo: '**/*'`), Cursor `.mdc` (`alwaysApply: true`), Claude Code `CLAUDE.md`, `AGENTS.md` | VS Code, Cursor, Claude Code, Codex, any agentsmd-compliant agent              | The only mechanism that is truly unconditional; needs a one-time install (`install-skill.sh`)                                                     |
+| Agent Skill (`SKILL.md`)                   | Editor lists skill name+description at startup; loads full body when relevant                                                                                                              | Zed, Cursor, Claude Code, Codex, OpenCode, any agentskills.io-compliant editor | On-demand — carries the _extended_ guide (tool-by-tool detail)                                                                                    |
+
+Same contract, three delivery channels. The always-on files carry the **condensed** contract (the same 7 rules as `src/instructions.ts` — always-on content must stay short, ~2,000 tokens max per Cursor's rule-of-thumb); the skill carries the full guide. If the client supports `instructions`, the model knows the contract before the first message. If it doesn't (Cursor), the always-on file covers it. The skill's `description` makes the agent load the extended guide when memory is relevant.
 
 ## Repo layout
 
 ```
 skills/sepia/
 ├── SKILL.md              # ← the skill (frontmatter + body, < 500 lines)
+├── always-on/            # ← always-on instruction files (condensed contract)
+│   ├── vscode.instructions.md   # VS Code Copilot: applyTo '**/*' → every chat request
+│   ├── cursor.mdc               # Cursor: alwaysApply: true → every session
+│   ├── claude.md                # Claude Code: appended to ~/.claude/CLAUDE.md
+│   └── agents.md                # AGENTS.md section (Codex, Cursor, Copilot, …)
 └── references/
     └── tools.md          # per-tool reference: schemas, examples, edge cases
 ```
+
+Source of truth for the contract: `src/instructions.ts` (`MEMORY_CONTRACT`). The always-on files mirror it — keep them in sync (each file carries a comment pointing at the source).
 
 ## SKILL.md (draft — copy verbatim into `skills/sepia/SKILL.md`)
 
@@ -138,30 +148,21 @@ Actions: create | get | update | delete | query
 
 ## Install matrix
 
-| Editor | Path | Install |
-| ------ | ---- | ------- |
-| Zed | `~/.agents/skills/sepia/` | `cp -r skills/sepia ~/.agents/skills/sepia` (works even though it's outside the project — global skills) |
-| Cursor | `.cursor/skills/sepia/` (repo) or `~/.cursor/skills/` (global) | copy; Cursor also picks up `.claude/skills/` for compatibility |
-| Claude Code | `.claude/skills/sepia/` (project) or `~/.claude/skills/` (personal) | copy; invoke with `/sepia` |
-| Codex | `.codex/skills/sepia/` or `~/.codex/skills/` | copy |
-| OpenCode | `.opencode/skills/sepia/` (verify path in current docs) | copy |
+| Editor          | Skill path                                                          | Always-on path                                                          |
+| --------------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Zed             | `~/.agents/skills/sepia/`                                           | — (no always-on instruction system; AGENTS.md covers it)                |
+| Cursor          | `.cursor/skills/sepia/` (repo) or `~/.cursor/skills/` (global)      | `~/.cursor/rules/sepia.mdc` (`alwaysApply: true`)                       |
+| Claude Code     | `.claude/skills/sepia/` (project) or `~/.claude/skills/` (personal) | `~/.claude/CLAUDE.md` (appended section)                                |
+| Codex           | `.codex/skills/sepia/` or `~/.codex/skills/`                        | `AGENTS.md` (repo)                                                      |
+| OpenCode        | `.opencode/skills/sepia/` (verify path in current docs)             | `AGENTS.md` (repo)                                                      |
+| VS Code Copilot | `~/.agents/skills/sepia/` (via `chat.useClaudeSkills`)              | `~/.config/Code/User/prompts/sepia.instructions.md` (`applyTo: '**/*'`) |
 
 ### One-shot installer (`scripts/install-skill.sh`)
 
-```bash
-#!/usr/bin/env bash
-# Installs the memory skill into every editor dir it can find.
-set -euo pipefail
-SRC="$(dirname "$0")/../skills/sepia"
-
-install_to() { mkdir -p "$1" && cp -R "$SRC/." "$1/" && echo "installed → $1"; }
-
-[ -d "$HOME/.agents/skills" ] && install_to "$HOME/.agents/skills/sepia"
-[ -d "$HOME/.cursor/skills" ] && install_to "$HOME/.cursor/skills/sepia"
-[ -d "$HOME/.claude/skills" ] && install_to "$HOME/.claude/skills/sepia"
-[ -d "$HOME/.codex/skills" ] && install_to "$HOME/.codex/skills/sepia"
-echo "Done. Restart your editor to pick up the skill."
-```
+Installs both channels: the skill into every editor skill dir, and the
+always-on files into the editor instruction systems (VS Code prompts folder,
+Cursor user rules, `~/.claude/CLAUDE.md` via marker-based idempotent append,
+and the current repo's `AGENTS.md` if present).
 
 ## Publishing (follow-up)
 
@@ -171,23 +172,29 @@ echo "Done. Restart your editor to pick up the skill."
 
 ## HTTP endpoints (served by the server, no repo clone needed)
 
-The server serves the skill + installer over HTTP (public, no auth — static docs):
+The server serves the skill, always-on files, and installer over HTTP (public, no auth — static docs):
 
-| Endpoint | Serves | Used by |
-| -------- | ------ | ------- |
-| `GET /skill` | `skills/sepia/SKILL.md` (text/markdown) | `npx skills add https://sepia.fly.dev/skill` |
-| `GET /skill/references/tools.md` | `skills/sepia/references/tools.md` | remote installer |
-| `GET /install` | `scripts/remote-install.sh` (shell script) | `curl -fsSL https://sepia.fly.dev/install \| bash` |
+| Endpoint                         | Serves                                     | Used by                                            |
+| -------------------------------- | ------------------------------------------ | -------------------------------------------------- |
+| `GET /skill`                     | `skills/sepia/SKILL.md` (text/markdown)    | `npx skills add https://sepia.fly.dev/skill`       |
+| `GET /skill/references/tools.md` | `skills/sepia/references/tools.md`         | remote installer                                   |
+| `GET /instructions/vscode`       | `always-on/vscode.instructions.md`         | remote installer → VS Code prompts folder          |
+| `GET /instructions/cursor`       | `always-on/cursor.mdc`                     | remote installer → Cursor user rules               |
+| `GET /instructions/claude`       | `always-on/claude.md`                      | remote installer → `~/.claude/CLAUDE.md`           |
+| `GET /instructions/agents`       | `always-on/agents.md`                      | remote installer → repo `AGENTS.md`                |
+| `GET /install`                   | `scripts/remote-install.sh` (shell script) | `curl -fsSL https://sepia.fly.dev/install \| bash` |
 
-The remote installer (`scripts/remote-install.sh`) fetches `SKILL.md` + `references/tools.md` from the server and installs into every editor skill dir it finds (`~/.agents/skills`, `.cursor/skills`, `.claude/skills`, `.codex/skills`, `.opencode/skills`). Idempotent — re-running overwrites in place.
+The remote installer (`scripts/remote-install.sh`) fetches `SKILL.md` + `references/tools.md` + the always-on files from the server and installs into every editor dir it finds (`~/.agents/skills`, `.cursor/skills`, `.claude/skills`, `.codex/skills`, `.opencode/skills`, VS Code prompts, Cursor rules, `~/.claude/CLAUDE.md`, repo `AGENTS.md`). Idempotent — re-running overwrites in place / skips existing sections.
 
 ## Acceptance criteria
 
 - [ ] Fresh Claude Code session: with only the skill + MCP configured, the agent recalls a stored fact without any reminder prompt
 - [ ] Fresh Zed session: same result via the skill catalog
-- [ ] `install-skill.sh` is idempotent (re-running doesn't duplicate)
+- [ ] Fresh Cursor session: the always-on rule is in context (check `@Rules` / rule list) and the agent recalls a stored fact unprompted
+- [ ] Fresh VS Code Copilot session: `sepia.instructions.md` shows in "Used references" and the agent recalls a stored fact unprompted
+- [ ] `install-skill.sh` is idempotent (re-running doesn't duplicate; CLAUDE.md append is marker-guarded)
 - [ ] `references/tools.md` matches `packages/shared/src/schemas.ts` (via `bun run gen:skill-ref`, checked in CI)
-- [ ] `curl -fsSL https://sepia.fly.dev/install | bash` installs the skill into a fresh editor dir
+- [ ] `curl -fsSL https://sepia.fly.dev/install | bash` installs the skill + always-on files into a fresh editor dir
 - [ ] `npx skills add Michael-Obele/sepia --list` discovers the `sepia` skill
 
 [Back to Plan](./README.md) · [Dashboard spec](./dashboard.md)

@@ -48,6 +48,8 @@ const PORT = Number(process.env.PORT ?? 8080);
 //   - GET /skill                    → SKILL.md (works with `npx skills add <url>`)
 //   - GET /skill/references/tools.md → per-tool reference
 //   - GET /install                  → remote installer script (curl | bash)
+//   - GET /instructions/{vscode,cursor,claude,agents}
+//                                  → always-on instruction files (skills/sepia/always-on/)
 const SKILL_DIR = new URL("../skills/sepia/", import.meta.url);
 
 function serveSkillFile(relPath: string, contentType: string) {
@@ -77,6 +79,12 @@ Bun.serve({
         health: "/healthz",
         skill: "/skill",
         install: "/install",
+        instructions: {
+          vscode: "/instructions/vscode",
+          cursor: "/instructions/cursor",
+          claude: "/instructions/claude",
+          agents: "/instructions/agents",
+        },
         auth: authEnabled()
           ? "bearer-token"
           : "dev-mode (MCP_BEARER_TOKEN not set)",
@@ -93,6 +101,24 @@ Bun.serve({
         "references/tools.md",
         "text/markdown; charset=utf-8",
       );
+    }
+    // Always-on instruction files (the "system prompt" channel — skills are
+    // on-demand only; these are injected into EVERY session by the editor's
+    // own instruction system). Same contract as the MCP `instructions` field.
+    if (url.pathname === "/instructions/vscode") {
+      return serveSkillFile(
+        "always-on/vscode.instructions.md",
+        "text/markdown; charset=utf-8",
+      );
+    }
+    if (url.pathname === "/instructions/cursor") {
+      return serveSkillFile("always-on/cursor.mdc", "text/markdown; charset=utf-8");
+    }
+    if (url.pathname === "/instructions/claude") {
+      return serveSkillFile("always-on/claude.md", "text/markdown; charset=utf-8");
+    }
+    if (url.pathname === "/instructions/agents") {
+      return serveSkillFile("always-on/agents.md", "text/markdown; charset=utf-8");
     }
     if (url.pathname === "/install") {
       const script = Bun.file(

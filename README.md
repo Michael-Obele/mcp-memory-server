@@ -6,7 +6,8 @@ A personal, self-hosted **remote knowledge-graph memory server for AI coding age
 
 - **7 focused MCP tools** over Streamable HTTP (not 17)
 - **MCP server instructions** — a usage contract auto-injected into the model's system prompt, so your AI recalls and persists _without you asking_
-- **A bundled Agent Skill** (`SKILL.md`, open standard) that teaches any editor the same contract
+- **Always-on editor instructions** — per-editor instruction files (VS Code prompts, Cursor rules, CLAUDE.md, AGENTS.md) injected into **every** session, so no editor can skip memory
+- **A bundled Agent Skill** (`SKILL.md`, open standard) that teaches any editor the full usage guide
 - **A web dashboard** with search, CRUD, stats, and an interactive knowledge-graph view
 - **Out-of-the-box support for online AIs** that speak MCP: Grok, ChatGPT, Claude, Gemini, Perplexity
 - **$0/month** on the free tiers of Fly.io + Neon Postgres + Netlify
@@ -19,16 +20,17 @@ The [official MCP memory server](https://github.com/modelcontextprotocol/servers
 
 ## Features
 
-| Feature                    | What it does                                                                                                                                                                        |
-| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 🧠 **Knowledge graph**     | Entities (nodes), weighted relations (edges), memories (facts/observations) with importance scoring, in isolated namespaces                                                         |
-| 🔎 **Search + traversal**  | Unified keyword search across everything; BFS graph traversal from any entity                                                                                                       |
-| 🧹 **`consolidate`**       | Idempotent maintenance sweep: decay-scoring, dedup, purge — pure SQL, no LLM calls                                                                                                  |
-| 📋 **Server instructions** | A usage contract sent in the MCP `initialize` handshake; supporting clients (Claude Code, Codex, Copilot, Goose) inject it into the system prompt — zero-reminder usage             |
-| 🛠️ **Bundled Agent Skill** | `skills/sepia/SKILL.md` (agentskills.io standard) — works in Zed, Cursor, Claude Code, Codex, OpenCode; covers editors that ignore `instructions`                                   |
-| 🖥️ **Web dashboard**       | Static SPA on Netlify: search, browse, edit, graph view, stats, and a "Connect an AI" page — never wakes the API's scaled-to-zero machine                                           |
-| 🌐 **Online AI support**   | Grok, ChatGPT, Claude web, Gemini (Spark), Perplexity, Le Chat all accept remote MCP connectors — your memory follows you to the web                                                |
-| 🔐 **Two-phase auth**      | Phase 1: static Bearer token (local editors, ~30 min). Phase 2: OAuth 2.1 + PKCE + dynamic client registration via `@tmcp/auth` (required for ChatGPT/Gemini/Grok-style connectors) |
+| Feature                       | What it does                                                                                                                                                                                                                                |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 🧠 **Knowledge graph**        | Entities (nodes), weighted relations (edges), memories (facts/observations) with importance scoring, in isolated namespaces                                                                                                                 |
+| 🔎 **Search + traversal**     | Unified keyword search across everything; BFS graph traversal from any entity                                                                                                                                                               |
+| 🧹 **`consolidate`**          | Idempotent maintenance sweep: decay-scoring, dedup, purge — pure SQL, no LLM calls                                                                                                                                                          |
+| 📋 **Server instructions**    | A usage contract sent in the MCP `initialize` handshake; supporting clients (Claude Code, Codex, Copilot, Goose) inject it into the system prompt — zero-reminder usage                                                                     |
+| ⚡ **Always-on instructions** | `skills/sepia/always-on/` — VS Code `*.instructions.md` (`applyTo: '**/*'`), Cursor `.mdc` (`alwaysApply: true`), `~/.claude/CLAUDE.md`, `AGENTS.md`; injected into **every** session, covering clients that ignore `instructions` (Cursor) |
+| 🛠️ **Bundled Agent Skill**    | `skills/sepia/SKILL.md` (agentskills.io standard) — works in Zed, Cursor, Claude Code, Codex, OpenCode; the on-demand extended guide (tool-by-tool detail)                                                                                  |
+| 🖥️ **Web dashboard**          | Static SPA on Netlify: search, browse, edit, graph view, stats, and a "Connect an AI" page — never wakes the API's scaled-to-zero machine                                                                                                   |
+| 🌐 **Online AI support**      | Grok, ChatGPT, Claude web, Gemini (Spark), Perplexity, Le Chat all accept remote MCP connectors — your memory follows you to the web                                                                                                        |
+| 🔐 **Two-phase auth**         | Phase 1: static Bearer token (local editors, ~30 min). Phase 2: OAuth 2.1 + PKCE + dynamic client registration via `@tmcp/auth` (required for ChatGPT/Gemini/Grok-style connectors)                                                         |
 
 ## Architecture
 
@@ -96,10 +98,11 @@ flowchart LR
 
 ## Remember Without Being Asked
 
-Two complementary channels, one contract (`src/instructions.ts`):
+Three complementary channels, one contract (`src/instructions.ts`):
 
 1. **MCP `instructions` field** — the server sends a usage contract in the `initialize` handshake; clients that support it (Claude Code, Codex, VS Code Copilot Chat, Goose, Claude Desktop) inject it into the model's system prompt. The model recalls before working and persists after learning — no reminder prompts.
-2. **Bundled Agent Skill** (`skills/sepia/SKILL.md`) — same contract, delivered through the open Agent Skills standard. Works in every editor regardless of `instructions` support. Belt and suspenders.
+2. **Always-on instruction files** (`skills/sepia/always-on/`) — the same condensed contract, installed into each editor's own instruction system: VS Code `*.instructions.md` with `applyTo: '**/*'` (auto-attached to every chat request), Cursor `.mdc` with `alwaysApply: true` (every session, unconditionally), a section in `~/.claude/CLAUDE.md` (loaded at session start), and an `AGENTS.md` section for Codex/other agents. Skills are on-demand by design in every platform, so this channel is what actually **forces** memory usage in editors that ignore `instructions` (Cursor).
+3. **Bundled Agent Skill** (`skills/sepia/SKILL.md`) — the extended guide (tool-by-tool detail, examples, edge cases), delivered through the open Agent Skills standard. Loads when memory is relevant.
 
 The contract teaches: **search before meaningful work**, **persist durable facts** (preferences, decisions, conventions), **prefer update over duplicate**, **link memories to entities**, **score importance 0–1**, and **never store credentials or ephemeral chat content**.
 
@@ -281,14 +284,16 @@ claude mcp add --transport http sepia https://sepia.fly.dev/mcp \
 
 All connect from the **provider's cloud**, so the server must be publicly reachable (it is — Fly with `force_https`); Streamable HTTP is the universal transport.
 
-### Install the skill
+### Install the skill + always-on instructions
 
-The skill is served over HTTP from the same server as the MCP endpoint, so you
-can install it without cloning the repo:
+The skill and the always-on instruction files are served over HTTP from the same
+server as the MCP endpoint, so you can install them without cloning the repo:
 
 ```bash
-# One-liner — fetches SKILL.md + references from the server and installs
-# into every editor skill dir it finds (~/.agents, .cursor, .claude, .codex, .opencode)
+# One-liner — fetches SKILL.md + references + always-on files from the server
+# and installs into every editor dir it finds:
+#   skills:  ~/.agents, .cursor, .claude, .codex, .opencode
+#   always-on: VS Code prompts folder, Cursor user rules, ~/.claude/CLAUDE.md, AGENTS.md
 curl -fsSL https://sepia.fly.dev/install | bash
 ```
 
@@ -305,24 +310,24 @@ npx skills add https://sepia.fly.dev/skill
 If you have the repo cloned, the local installer works too:
 
 ```bash
-bun run scripts/install-skill.sh   # detects ~/.agents/skills, .cursor/skills, .claude/skills, .codex/skills
+bun run scripts/install-skill.sh   # skill + always-on files, idempotent
 ```
 
-Restart your editor to pick it up. Claude Code users can also invoke it on demand with `/sepia`.
+Restart your editor to pick it up. Claude Code users can also invoke the skill on demand with `/sepia`.
 
 [![skills.sh](https://skills.sh/b/Michael-Obele/sepia)](https://skills.sh/Michael-Obele/sepia)
 
 ## Roadmap
 
-| Milestone                                   | Exit criteria                                                                                    | Est.     |
-| ------------------------------------------- | ------------------------------------------------------------------------------------------------ | -------- |
-| M1 — Server on Fly.io, Bearer auth, 7 tools | Inspector connects; CRUD works end-to-end against Neon                                           | 2 days   |
-| M2 — Server instructions + skill            | New chat in Claude Code recalls a memory with zero reminder prompts; skill works in Zed + Cursor | 1 day    |
-| M3 — REST API + dashboard on Netlify        | Browse/search/graph/CRUD at `sepia.svelte-apps.me`; stats load                                   | 1.5 days |
-| M4 — OAuth 2.1 (`@tmcp/auth`)               | `codex mcp login` + inspector OAuth flow succeed; Claude connector works                         | 1 day    |
-| M5 — Online AI rollout                      | Grok + ChatGPT + Gemini connectors authorized; memory usable from web chats                      | 0.5 day  |
+| Milestone                                   | Exit criteria                                                                                                                                   | Est.     |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| M1 — Server on Fly.io, Bearer auth, 7 tools | Inspector connects; CRUD works end-to-end against Neon                                                                                          | 2 days   |
+| M2 — Server instructions + skill            | New chat in Claude Code recalls a memory with zero reminder prompts; skill works in Zed + Cursor; always-on files installed in VS Code + Cursor | 1 day    |
+| M3 — REST API + dashboard on Netlify        | Browse/search/graph/CRUD at `sepia.svelte-apps.me`; stats load                                                                                  | 1.5 days |
+| M4 — OAuth 2.1 (`@tmcp/auth`)               | `codex mcp login` + inspector OAuth flow succeed; Claude connector works                                                                        | 1 day    |
+| M5 — Online AI rollout                      | Grok + ChatGPT + Gemini connectors authorized; memory usable from web chats                                                                     | 0.5 day  |
 
-**Release gate:** everything in M1–M3 works in a fresh chat with zero reminder prompts (verified via instructions + skill), and the dashboard shows the same data the agents write.
+**Release gate:** everything in M1–M3 works in a fresh chat with zero reminder prompts (verified via instructions + always-on files + skill), and the dashboard shows the same data the agents write.
 
 ### Future enhancements
 
