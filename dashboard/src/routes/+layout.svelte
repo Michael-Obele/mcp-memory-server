@@ -1,5 +1,6 @@
 <script lang="ts">
 	import './layout.css';
+	import favicon from '$lib/assets/favicon.svg?no-inline';
 	import { Toaster } from '$lib/components/ui/sonner/index.js';
 	import { auth } from '$lib/auth.svelte';
 	import { getToken } from '$lib/session.svelte';
@@ -23,6 +24,11 @@
 		auth.token = getToken() ?? '';
 	});
 </script>
+
+<svelte:head>
+	<link rel="icon" type="image/svg+xml" href={favicon} />
+	<meta name="theme-color" content="#D4956A" />
+</svelte:head>
 
 {@render children()}
 
