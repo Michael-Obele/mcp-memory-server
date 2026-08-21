@@ -1,5 +1,13 @@
 <script lang="ts">
-	import { Area, AreaChart, defaultChartPadding, LinearGradient } from 'layerchart';
+	import {
+		Area,
+		AreaChart,
+		AnnotationPoint,
+		defaultChartPadding,
+		Highlight,
+		LinearGradient,
+		Tooltip
+	} from 'layerchart';
 
 	// Illustrative growth curve — your graph accumulates as agents work.
 	const data = [
@@ -41,5 +49,19 @@
 				{/snippet}
 			</LinearGradient>
 		{/each}
+		<Highlight lines points />
+	{/snippet}
+
+	{#snippet tooltip({ context })}
+		<Tooltip.Root x="pointer" y="pointer" anchor="top" portal={false}>
+			{#snippet children({ data })}
+				<Tooltip.Header value={data.week} class="text-xs" />
+				<Tooltip.List>
+					{#each series as s (s.key)}
+						<Tooltip.Item label={s.label} value={data[s.key]} color={s.color} />
+					{/each}
+				</Tooltip.List>
+			{/snippet}
+		</Tooltip.Root>
 	{/snippet}
 </AreaChart>
