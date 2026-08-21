@@ -26,7 +26,7 @@
 
 	const nodeColors: Record<string, string> = {
 		client: 'var(--color-teal-400)',
-		endpoint: 'var(--color-indigo-400)',
+		endpoint: 'var(--color-brand)',
 		server: 'var(--color-violet-400)',
 		db: 'var(--color-amber-400)'
 	};
@@ -36,7 +36,7 @@
 	// dark background.
 	const flowColors: Record<string, string> = {
 		client: 'var(--color-teal-300)',
-		endpoint: 'var(--color-indigo-300)',
+		endpoint: 'var(--color-amber-300)',
 		server: 'var(--color-violet-300)',
 		db: 'var(--color-amber-300)'
 	};

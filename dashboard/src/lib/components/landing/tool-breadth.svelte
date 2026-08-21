@@ -18,7 +18,7 @@
 	x="ops"
 	y="tool"
 	orientation="horizontal"
-	series={[{ key: 'ops', value: 'ops', color: 'var(--color-indigo-400)' }]}
+	series={[{ key: 'ops', value: 'ops', color: 'var(--color-brand)' }]}
 	axis="y"
 	rule={false}
 	props={{

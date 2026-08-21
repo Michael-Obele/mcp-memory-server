@@ -1,8 +1,6 @@
 <script lang="ts">
 	import {
-		BrainCircuit,
 		Search,
-		Boxes,
 		Network,
 		RefreshCw,
 		Layers,
@@ -17,6 +15,7 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Card, CardContent } from '$lib/components/ui/card/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
+	import favicon from '$lib/assets/favicon.svg?no-inline';
 	import HeroGraph from '$lib/components/landing/hero-graph.svelte';
 	import ToolBreadth from '$lib/components/landing/tool-breadth.svelte';
 	import MemoryGrowth from '$lib/components/landing/memory-growth.svelte';
@@ -27,37 +26,37 @@
 			icon: Database,
 			title: 'Knowledge graph',
 			desc: 'Entities, weighted relations, and memories with importance scoring — structured like how your brain actually works.',
-			color: 'text-blue-400'
+			color: 'text-orange-400'
 		},
 		{
 			icon: Search,
 			title: 'Unified search',
 			desc: 'Keyword + metadata search across everything. BFS graph traversal from any entity. Find what your AI stored.',
-			color: 'text-violet-400'
+			color: 'text-amber-400'
 		},
 		{
 			icon: RefreshCw,
 			title: 'Self-maintaining',
 			desc: 'Decay scoring, deduplication, and purge — pure SQL, no LLM calls. The consolidate tool keeps your graph clean.',
-			color: 'text-teal-400'
+			color: 'text-yellow-500'
 		},
 		{
 			icon: Layers,
 			title: 'Namespaced',
 			desc: "Isolate memory into spaces — per project, per client, per context. Your AI knows which world it's in.",
-			color: 'text-amber-400'
+			color: 'text-brand'
 		},
 		{
 			icon: Zap,
 			title: 'Zero-reminder recall',
 			desc: "Server instructions auto-injected into your AI's system prompt. Your agents remember without you asking.",
-			color: 'text-emerald-400'
+			color: 'text-amber-300'
 		},
 		{
 			icon: Shield,
 			title: 'Self-hosted',
 			desc: 'Your data stays on your infrastructure. No SaaS dependency. Bearer token for editors, OAuth for web AIs.',
-			color: 'text-rose-400'
+			color: 'text-red-400'
 		}
 	];
 
@@ -89,7 +88,7 @@
 <section class="relative flex min-h-screen items-center overflow-hidden px-4 py-24">
 	<!-- Ambient glow -->
 	<div
-		class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,transparent_0%,var(--background)_72%)]"
+		class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(212,149,106,0.08)_0%,transparent_50%),radial-gradient(ellipse_at_top_left,transparent_0%,var(--background)_72%)]"
 		aria-hidden="true"
 	></div>
 
@@ -98,9 +97,9 @@
 	>
 		<div>
 			<div
-				class="mb-6 flex size-16 items-center justify-center rounded-2xl bg-indigo-500/15 ring-1 ring-indigo-500/25"
+				class="mb-6 flex size-16 items-center justify-center rounded-2xl bg-brand/15 ring-1 ring-brand/25"
 			>
-				<BrainCircuit class="size-8 text-indigo-400" />
+				<img src={favicon} alt="" class="size-8" />
 			</div>
 
 			<h1
@@ -231,7 +230,7 @@
 				</p>
 				<div class="mt-8 space-y-3">
 					<div class="flex items-start gap-3">
-						<Database class="mt-0.5 size-4 shrink-0 text-indigo-400" />
+						<Database class="mt-0.5 size-4 shrink-0 text-brand" />
 						<div>
 							<p class="text-sm font-medium text-foreground">Facts, observations, preferences</p>
 							<p class="text-sm text-muted-foreground">
@@ -240,7 +239,7 @@
 						</div>
 					</div>
 					<div class="flex items-start gap-3">
-						<Network class="mt-0.5 size-4 shrink-0 text-teal-400" />
+						<Network class="mt-0.5 size-4 shrink-0 text-amber-400" />
 						<div>
 							<p class="text-sm font-medium text-foreground">Weighted relations</p>
 							<p class="text-sm text-muted-foreground">
@@ -249,7 +248,7 @@
 						</div>
 					</div>
 					<div class="flex items-start gap-3">
-						<RefreshCw class="mt-0.5 size-4 shrink-0 text-violet-400" />
+						<RefreshCw class="mt-0.5 size-4 shrink-0 text-orange-400" />
 						<div>
 							<p class="text-sm font-medium text-foreground">Self-maintaining</p>
 							<p class="text-sm text-muted-foreground">
@@ -287,7 +286,7 @@
 				</p>
 				<div class="mt-8 space-y-3">
 					<div class="flex items-start gap-3">
-						<Server class="mt-0.5 size-4 shrink-0 text-indigo-400" />
+						<Server class="mt-0.5 size-4 shrink-0 text-brand" />
 						<div>
 							<p class="text-sm font-medium text-foreground">Scale-to-zero</p>
 							<p class="text-sm text-muted-foreground">
@@ -297,7 +296,7 @@
 						</div>
 					</div>
 					<div class="flex items-start gap-3">
-						<Shield class="mt-0.5 size-4 shrink-0 text-indigo-400" />
+						<Shield class="mt-0.5 size-4 shrink-0 text-brand" />
 						<div>
 							<p class="text-sm font-medium text-foreground">Two-phase auth</p>
 							<p class="text-sm text-muted-foreground">
@@ -307,7 +306,7 @@
 						</div>
 					</div>
 					<div class="flex items-start gap-3">
-						<Plug class="mt-0.5 size-4 shrink-0 text-indigo-400" />
+						<Plug class="mt-0.5 size-4 shrink-0 text-brand" />
 						<div>
 							<p class="text-sm font-medium text-foreground">Works everywhere</p>
 							<p class="text-sm text-muted-foreground">
@@ -387,20 +386,20 @@
 			</p>
 			<div class="space-y-2 font-mono text-sm">
 				<p class="text-muted-foreground">
-					<span class="text-indigo-400">$</span> fly launch
+					<span class="text-brand">$</span> fly launch
 				</p>
 				<p class="text-muted-foreground">
-					<span class="text-indigo-400">$</span> fly secrets set DATABASE_URL=...
+					<span class="text-brand">$</span> fly secrets set DATABASE_URL=...
 				</p>
 				<p class="text-muted-foreground">
-					<span class="text-indigo-400">$</span> fly secrets set AUTH_TOKEN=...
+					<span class="text-brand">$</span> fly secrets set AUTH_TOKEN=...
 				</p>
 				<p class="mt-3 text-muted-foreground">
-					<span class="text-indigo-400">#</span> Connect your AI
+					<span class="text-brand">#</span> Connect your AI
 				</p>
 				<p class="text-muted-foreground">
-					<span class="text-indigo-400">$</span> open
-					<span class="text-teal-400">https://your-app.fly.dev/mcp</span>
+					<span class="text-brand">$</span> open
+					<span class="text-amber-400">https://your-app.fly.dev/mcp</span>
 				</p>
 			</div>
 		</div>
@@ -426,7 +425,7 @@
 		class="mx-auto flex max-w-5xl flex-col items-center gap-4 text-sm text-muted-foreground sm:flex-row sm:justify-between"
 	>
 		<div class="flex items-center gap-2">
-			<BrainCircuit class="size-4 text-indigo-400" />
+			<img src={favicon} alt="" class="size-4" />
 			<span class="font-medium text-foreground">Sepia</span>
 			<span>· Memory server for AI agents</span>
 		</div>

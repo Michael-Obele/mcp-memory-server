@@ -24,7 +24,7 @@
 	const series = [
 		{ key: 'relations', label: 'Relations', color: 'var(--color-violet-400)' },
 		{ key: 'entities', label: 'Entities', color: 'var(--color-teal-400)' },
-		{ key: 'memories', label: 'Memories', color: 'var(--color-indigo-400)' }
+		{ key: 'memories', label: 'Memories', color: 'var(--color-brand)' }
 	];
 </script>
 

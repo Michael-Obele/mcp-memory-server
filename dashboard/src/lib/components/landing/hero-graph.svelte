@@ -108,7 +108,7 @@
 </script>
 
 <div
-	class="relative overflow-hidden rounded-2xl border border-border/60 bg-card/40 shadow-[0_0_0_1px_rgba(255,255,255,0.02),0_24px_60px_-24px_rgba(0,0,0,0.6)]"
+	class="relative overflow-hidden rounded-2xl border border-brand/15 bg-card/40 shadow-[0_0_0_1px_rgba(212,149,106,0.04),0_24px_60px_-24px_rgba(0,0,0,0.6)]"
 >
 	<!-- Window chrome -->
 	<div
