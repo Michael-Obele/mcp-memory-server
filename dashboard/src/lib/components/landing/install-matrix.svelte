@@ -27,6 +27,7 @@
 
 	let copied = $state('');
 	let activeTab = $state('vscode');
+	let installScope = $state<'global' | 'both'>('global');
 
 	async function copy(text: string, key: string) {
 		await navigator.clipboard.writeText(text);
@@ -35,7 +36,10 @@
 	}
 
 	const oneLiner = `curl -fsSL ${BASE}/install | bash`;
+	const oneLinerGlobal = `SEPIA_SCOPE=global curl -fsSL ${BASE}/install | bash`;
+	const oneLinerBoth = `curl -fsSL ${BASE}/install | bash  # or SEPIA_SCOPE=both`;
 	const oneLinerWithToken = `SEPIA_TOKEN=YOUR_TOKEN curl -fsSL ${BASE}/install | bash`;
+	const oneLinerGlobalWithToken = `SEPIA_TOKEN=YOUR_TOKEN SEPIA_SCOPE=global curl -fsSL ${BASE}/install | bash`;
 
 	const configs = {
 		vscode: `{
@@ -181,7 +185,7 @@
 			</p>
 		</div>
 
-		<!-- One-liner -->
+		<!-- One-liner — with Global vs Both toggle -->
 		<Card class="mt-10 overflow-hidden border-border/60">
 			<CardHeader class="pb-3">
 				<div class="flex flex-wrap items-center justify-between gap-3">
@@ -194,21 +198,56 @@
 						<div>
 							<CardTitle class="text-sm">One-line installer</CardTitle>
 							<CardDescription class="text-xs"
-								>Detects every editor you have and installs idempotently</CardDescription
+								>Global = one-and-done for this machine. Add repo files only if you want team
+								sharing via git.</CardDescription
 							>
 						</div>
 					</div>
 					<Badge variant="secondary" class="font-mono text-xs">curl → bash</Badge>
 				</div>
+				<!-- Scope toggle -->
+				<div class="mt-4 inline-flex rounded-lg bg-muted p-1 text-xs">
+					<button
+						class="rounded-md px-3 py-1.5 font-medium transition-colors {installScope === 'global'
+							? 'bg-background text-foreground shadow-sm ring-1 ring-border'
+							: 'text-muted-foreground hover:text-foreground'}"
+						onclick={() => (installScope = 'global')}
+					>
+						Global only — install once
+					</button>
+					<button
+						class="rounded-md px-3 py-1.5 font-medium transition-colors {installScope === 'both'
+							? 'bg-background text-foreground shadow-sm ring-1 ring-border'
+							: 'text-muted-foreground hover:text-foreground'}"
+						onclick={() => (installScope = 'both')}
+					>
+						Global + repo (share via git)
+					</button>
+				</div>
+				<p class="mt-2 text-xs leading-relaxed text-muted-foreground">
+					{#if installScope === 'global'}
+						<span class="font-medium text-foreground">Recommended for solo use.</span> Installs to
+						<code class="rounded bg-muted px-1 font-mono">~/.config / ~/.cursor / ~/.claude</code> — every
+						repo on this machine remembers forever. Never run again.
+					{:else}
+						<span class="font-medium text-foreground">For teams.</span> Also writes
+						<code class="rounded bg-muted px-1 font-mono"
+							>.github/instructions/ .cursor/rules/ ./AGENTS.md</code
+						> in the current repo so teammates get it when they pull.
+					{/if}
+				</p>
 			</CardHeader>
 			<CardContent class="space-y-3">
 				<div class="flex items-center gap-2 rounded-lg bg-muted p-3 font-mono text-sm">
 					<span class="hidden text-muted-foreground sm:inline">$</span>
-					<code class="flex-1 truncate text-foreground">{oneLiner}</code>
+					<code class="flex-1 truncate text-foreground"
+						>{installScope === 'global' ? oneLinerGlobal : oneLinerBoth}</code
+					>
 					<Button
 						variant="ghost"
 						size="icon-sm"
-						onclick={() => copy(oneLiner, 'oneliner')}
+						onclick={() =>
+							copy(installScope === 'global' ? oneLinerGlobal : oneLinerBoth, 'oneliner')}
 						aria-label="Copy one-liner"
 					>
 						{#if copied === 'oneliner'}<Check class="size-4 text-green-500" />{:else}<Copy
@@ -218,11 +257,17 @@
 				</div>
 				<div class="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
 					<span class="font-mono">With token (also patches MCP configs):</span>
-					<code class="rounded bg-muted px-1.5 py-1 font-mono text-xs">{oneLinerWithToken}</code>
+					<code class="rounded bg-muted px-1.5 py-1 font-mono text-xs"
+						>{installScope === 'global' ? oneLinerGlobalWithToken : oneLinerWithToken}</code
+					>
 					<Button
 						variant="ghost"
 						size="xs"
-						onclick={() => copy(oneLinerWithToken, 'oneliner-token')}
+						onclick={() =>
+							copy(
+								installScope === 'global' ? oneLinerGlobalWithToken : oneLinerWithToken,
+								'oneliner-token'
+							)}
 						class="h-6 gap-1"
 					>
 						{#if copied === 'oneliner-token'}<Check class="size-3" />{:else}<Copy
@@ -241,6 +286,17 @@
 					<span class="inline-flex items-center gap-1.5"
 						><span class="size-1.5 rounded-full bg-violet-400"></span> MCP → headers</span
 					>
+					{#if installScope === 'global'}
+						<span
+							class="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2 py-0.5 font-medium text-primary ring-1 ring-primary/20"
+							>Scope: global — no repo writes</span
+						>
+					{:else}
+						<span
+							class="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2 py-0.5 font-medium text-amber-600 ring-1 ring-amber-500/20"
+							>Scope: both — global + repo</span
+						>
+					{/if}
 				</div>
 				<p class="text-xs leading-relaxed text-muted-foreground">
 					Fallback: <code class="rounded bg-muted px-1 font-mono"
@@ -249,6 +305,9 @@
 					or <code class="rounded bg-muted px-1 font-mono">npx skills add {BASE}/skill</code>.
 					Local:
 					<code class="rounded bg-muted px-1 font-mono">bun run scripts/install-skill.sh</code>
+					{#if installScope === 'global'}
+						— add <code class="rounded bg-muted px-1 font-mono">SEPIA_SCOPE=global</code> to force global-only.
+					{/if}
 				</p>
 			</CardContent>
 		</Card>
@@ -343,17 +402,42 @@
 									class="mb-2 text-xs font-semibold tracking-wider text-muted-foreground uppercase"
 								>
 									System instructions → where they live
+									<span
+										class="ml-2 font-normal tracking-normal text-muted-foreground/70 normal-case"
+										>— ~/. = global (one-and-done), ./ = repo (share via git)</span
+									>
 								</p>
 								<div class="grid gap-2 sm:grid-cols-2">
 									{#each ed.files as f}
-										<div
-											class="flex items-center gap-2 rounded-lg border border-border/50 bg-muted/50 px-3 py-2 font-mono text-xs"
-										>
-											<FileText class="size-3.5 shrink-0 text-muted-foreground" />
-											<span class="truncate">{f}</span>
-										</div>
+										{@const isGlobal = f.startsWith('~')}
+										{@const isRepo = !isGlobal}
+										{@const show = installScope === 'global' ? isGlobal : true}
+										{#if show}
+											<div
+												class="flex items-center gap-2 rounded-lg border px-3 py-2 font-mono text-xs {isGlobal
+													? 'border-primary/20 bg-primary/5'
+													: 'border-amber-500/20 bg-amber-500/5'}"
+											>
+												<FileText
+													class="size-3.5 shrink-0 {isGlobal ? 'text-primary' : 'text-amber-500'}"
+												/>
+												<span class="truncate">{f}</span>
+												<span
+													class="ml-auto shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium tracking-wider uppercase {isGlobal
+														? 'bg-primary/10 text-primary ring-1 ring-primary/20'
+														: 'bg-amber-500/10 text-amber-600 ring-1 ring-amber-500/20'}"
+													>{isGlobal ? 'global' : 'repo'}</span
+												>
+											</div>
+										{/if}
 									{/each}
 								</div>
+								{#if installScope === 'global'}
+									<p class="mt-2 text-xs text-muted-foreground">
+										Global files alone are enough — every repo on this machine will remember. Repo
+										files are optional (for team sharing).
+									</p>
+								{/if}
 							</div>
 
 							<!-- MCP -->

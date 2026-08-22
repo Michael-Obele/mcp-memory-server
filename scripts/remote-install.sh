@@ -11,6 +11,7 @@ set -euo pipefail
 
 BASE="${SEPIA_BASE:-https://sepia.fly.dev}"
 TOKEN="${SEPIA_TOKEN:-${MCP_BEARER_TOKEN:-}}"
+SCOPE="${SEPIA_SCOPE:-both}" # both | global | repo — "global" = user-level only, one-and-done
 
 install_to() {
   local dir="$1"
@@ -67,23 +68,29 @@ done
 # are injected into EVERY chat automatically.
 
 # VS Code Copilot — file-based instructions with applyTo: "**"
-# Modern location: .github/instructions/sepia.instructions.md (workspace) + user prompts folder.
-VSCODE_PROMPTS="${VSCODE_USER_PROMPTS_FOLDER:-$HOME/.config/Code/User/prompts}"
-if [ -d "$VSCODE_PROMPTS" ] || [ -d "$HOME/.config/Code" ]; then
-  mkdir -p "$VSCODE_PROMPTS"
-  safe_fetch "$BASE/instructions/vscode" "$VSCODE_PROMPTS/sepia.instructions.md" || true
+if [ "$SCOPE" != "repo" ]; then
+  VSCODE_PROMPTS="${VSCODE_USER_PROMPTS_FOLDER:-$HOME/.config/Code/User/prompts}"
+  if [ -d "$VSCODE_PROMPTS" ] || [ -d "$HOME/.config/Code" ]; then
+    mkdir -p "$VSCODE_PROMPTS"
+    safe_fetch "$BASE/instructions/vscode" "$VSCODE_PROMPTS/sepia.instructions.md" || true
+  fi
 fi
 # Workspace: .github/instructions (preferred) — auto-attached via applyTo "**"
-if [ -d ".github" ] || [ -f "AGENTS.md" ] || git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-  mkdir -p ".github/instructions"
-  safe_fetch "$BASE/instructions/vscode" ".github/instructions/sepia.instructions.md" || true
+if [ "$SCOPE" != "global" ]; then
+  if [ -d ".github" ] || [ -f "AGENTS.md" ] || git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    mkdir -p ".github/instructions"
+    safe_fetch "$BASE/instructions/vscode" ".github/instructions/sepia.instructions.md" || true
+  fi
 fi
 
 # Cursor — user rules (alwaysApply: true → every session, unconditionally).
-if [ -d "$HOME/.cursor" ] || [ -d ".cursor" ]; then
-  mkdir -p "$HOME/.cursor/rules"
-  safe_fetch "$BASE/instructions/cursor" "$HOME/.cursor/rules/sepia.mdc" || true
-  # Also project-local for sharing via git
+if [ "$SCOPE" != "repo" ]; then
+  if [ -d "$HOME/.cursor" ] || [ -d ".cursor" ]; then
+    mkdir -p "$HOME/.cursor/rules"
+    safe_fetch "$BASE/instructions/cursor" "$HOME/.cursor/rules/sepia.mdc" || true
+  fi
+fi
+if [ "$SCOPE" != "global" ]; then
   if [ -d ".cursor" ] || git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     mkdir -p ".cursor/rules"
     safe_fetch "$BASE/instructions/cursor" ".cursor/rules/sepia.mdc" || true
@@ -96,18 +103,22 @@ if [ -d "$HOME/.claude" ]; then
 fi
 
 # AGENTS.md (Codex, Cursor, Copilot, OpenCode, generic agentsmd) — repo + global
-if [ -f "AGENTS.md" ]; then
-  append_section "AGENTS.md" "$BASE/instructions/agents" "## Sepia memory (always-on)"
-else
-  echo "note: no AGENTS.md in $(pwd) — will create one"
-  append_section "AGENTS.md" "$BASE/instructions/agents" "## Sepia memory (always-on)"
+if [ "$SCOPE" != "global" ]; then
+  if [ -f "AGENTS.md" ]; then
+    append_section "AGENTS.md" "$BASE/instructions/agents" "## Sepia memory (always-on)"
+  else
+    echo "note: no AGENTS.md in $(pwd) — will create one"
+    append_section "AGENTS.md" "$BASE/instructions/agents" "## Sepia memory (always-on)"
+  fi
 fi
 # Global AGENTS.md for OpenCode/Codex user-level
-for f in "$HOME/.config/opencode/AGENTS.md" "$HOME/.codex/AGENTS.md" "$HOME/AGENTS.md"; do
-  if [ -d "$(dirname "$f")" ]; then
-    append_section "$f" "$BASE/instructions/agents" "## Sepia memory (always-on)"
-  fi
-done
+if [ "$SCOPE" != "repo" ]; then
+  for f in "$HOME/.config/opencode/AGENTS.md" "$HOME/.codex/AGENTS.md" "$HOME/AGENTS.md"; do
+    if [ -d "$(dirname "$f")" ]; then
+      append_section "$f" "$BASE/instructions/agents" "## Sepia memory (always-on)"
+    fi
+  done
+fi
 
 # OpenCode — dedicated always-on file (also respects AGENTS.md)
 if [ -d "$HOME/.config/opencode" ] || [ -f "opencode.json" ] || [ -f "opencode.jsonc" ]; then
@@ -174,14 +185,19 @@ PY
 fi
 
 echo ""
-echo "Done. Installed:"
+echo "Done. Installed (scope: $SCOPE):"
 echo "  • Skill:        SKILL.md → .agents/.cursor/.claude/.codex/.opencode (user + project)"
-echo "  • VS Code:      .github/instructions/sepia.instructions.md + ~/.config/Code/User/prompts/sepia.instructions.md"
-echo "  • Cursor:       .cursor/rules/sepia.mdc + ~/.cursor/rules/sepia.mdc"
-echo "  • Claude:       ~/.claude/CLAUDE.md"
-echo "  • AGENTS.md:    ./AGENTS.md + ~/.config/opencode/AGENTS.md + ~/.codex/AGENTS.md"
-echo "  • OpenCode:     ~/.config/opencode/sepia.md"
-echo "  • Zed:          ~/.config/zed/sepia.md (+ context_servers in settings.json)"
+if [ "$SCOPE" != "repo" ]; then
+  echo "  • VS Code:      ~/.config/Code/User/prompts/sepia.instructions.md (global, one-and-done)"
+  echo "  • Cursor:       ~/.cursor/rules/sepia.mdc (global)"
+  echo "  • Claude:       ~/.claude/CLAUDE.md"
+  echo "  • AGENTS.md:    ~/.config/opencode/AGENTS.md + ~/.codex/AGENTS.md (global)"
+  echo "  • OpenCode:     ~/.config/opencode/sepia.md (global)"
+  echo "  • Zed:          ~/.config/zed/sepia.md (global) + context_servers"
+fi
+if [ "$SCOPE" != "global" ]; then
+  echo "  • Repo:         .github/instructions/sepia.instructions.md + .cursor/rules/sepia.mdc + ./AGENTS.md (commit to git for team)"
+fi
 if [ -z "$TOKEN" ]; then
   echo ""
   echo "Next: set SEPIA_TOKEN and re-run to auto-patch MCP configs, or copy configs from:"
