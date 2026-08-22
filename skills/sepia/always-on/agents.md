@@ -1,26 +1,20 @@
-## Sepia memory (always-on)
+## Sepia memory (always-on) — AGENTS.md (Codex / OpenCode / generic)
 
-You are connected to the user's personal memory server (sepia) over MCP. It
-stores a knowledge graph (entities, relations, memories) in namespaces
-(default `personal`). Use it BEFORE and AFTER meaningful work — do not wait
-to be asked.
+You are connected to the user's personal Sepia memory server (sepia) over MCP (any `AGENTS.md`-aware agent: Codex, OpenCode, Copilot, Cursor, Zed). It stores a knowledge graph in namespaces (default `personal`): entities, relations, memories with importance scoring.
 
-1. BEFORE starting meaningful work, call `search` with the user's current
-   task and topic keywords to recall relevant memories.
-2. WHEN you learn a durable fact (preference, decision, project fact,
-   convention, person), call `manage_memory` with action=create, and link
-   it to entities via the entity_ids field — creating entities with
-   `manage_entity` (action=create) as needed.
-3. PREFER update over duplicate: search first, then `manage_memory`
-   action=update or `manage_entity` action=update.
-4. USE `manage_relation` to connect related entities (e.g. "project X
-   uses tool Y", "user prefers Z").
-5. SCORE importance 0-1: 0.9+ core identity/preferences, 0.6-0.8 project
-   facts, 0.3-0.5 normal observations, <=0.2 transient details.
-6. DO NOT store: ephemeral chat content, code snippets, credentials,
-   secrets, or anything the user would not want persisted.
-7. If a search returns nothing, say so plainly — do not fabricate memories.
+> **MANDATORY:** This file is auto-loaded in every session by all `AGENTS.md` clients. Your first tool call on any meaningful task MUST be `search`. If you answer without searching, you are guessing.
 
-For tool-by-tool detail, load the sepia skill (SKILL.md) when needed.
+### Workflow (do this every session)
+
+1. **BEFORE meaningful work** — `search` with 2-5 keywords from the task (e.g. `search query="auth rate limiting"`). If sparse, `traverse_graph` from the top entity. Weave hits into your answer (`From your memory: ...`). If nothing, say so — never fabricate.
+2. **WHEN you learn a durable fact** (preference, decision+why, project fact, tool/stack, person, convention) — persist NOW:
+   - `manage_entity` find → create (with `summary`) if missing
+   - `manage_memory` create (`content`, `type`, `importance`, `entity_ids` 1-3)
+   - `manage_relation` to link graph (`project —uses→ tool`)
+3. **Prefer update** over duplicate — search first, then `action=update`.
+4. **Importance 0-1:** 0.9+ identity/core pref, 0.6-0.8 project fact/decision, 0.3-0.5 observation, ≤0.2 transient.
+5. **Never store:** ephemeral chat, code snippets, credentials/secrets.
+
+For full tool schemas, load the `sepia` skill (`SKILL.md`). Project `AGENTS.md` stacks with `~/.config/opencode/AGENTS.md` and `~/.codex/AGENTS.md`. See also `src/instructions.ts` (source of truth).
 
 <!-- Source of truth: src/instructions.ts (MEMORY_CONTRACT). Keep in sync. -->

@@ -20,6 +20,7 @@
 	import ToolBreadth from '$lib/components/landing/tool-breadth.svelte';
 	import MemoryGrowth from '$lib/components/landing/memory-growth.svelte';
 	import ArchitectureFlow from '$lib/components/landing/architecture-flow.svelte';
+	import InstallMatrix from '$lib/components/landing/install-matrix.svelte';
 
 	const features = [
 		{
@@ -365,6 +366,9 @@
 		</div>
 	</div>
 </section>
+
+<!-- Install matrix — always-on + skill + MCP for every editor -->
+<InstallMatrix />
 
 <!-- Deploy CTA -->
 <section class="relative px-4 py-24 sm:py-32">

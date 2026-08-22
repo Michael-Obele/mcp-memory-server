@@ -84,6 +84,8 @@ Bun.serve({
           cursor: "/instructions/cursor",
           claude: "/instructions/claude",
           agents: "/instructions/agents",
+          opencode: "/instructions/opencode",
+          zed: "/instructions/zed",
         },
         auth: authEnabled()
           ? "bearer-token"
@@ -119,6 +121,12 @@ Bun.serve({
     }
     if (url.pathname === "/instructions/agents") {
       return serveSkillFile("always-on/agents.md", "text/markdown; charset=utf-8");
+    }
+    if (url.pathname === "/instructions/opencode") {
+      return serveSkillFile("always-on/opencode.md", "text/markdown; charset=utf-8");
+    }
+    if (url.pathname === "/instructions/zed") {
+      return serveSkillFile("always-on/zed.md", "text/markdown; charset=utf-8");
     }
     if (url.pathname === "/install") {
       const script = Bun.file(

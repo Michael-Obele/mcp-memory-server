@@ -1,8 +1,8 @@
-## Sepia memory (always-on) — Claude Code
+## Sepia memory (always-on) — OpenCode
 
-You are connected to the user's personal Sepia memory server (sepia) over MCP (`sepia` at `https://sepia.fly.dev/mcp`, `Authorization: Bearer TOKEN` via `claude mcp add --transport http`). It stores a knowledge graph in namespaces (default `personal`): entities, relations, memories with importance scoring.
+You are connected to the user's personal Sepia memory server over MCP (`sepia` remote at `https://sepia.fly.dev/mcp`). Model: `sepia` in `opencode.json` (`type: "remote"`, `headers.Authorization: "Bearer TOKEN"`). It stores a knowledge graph in namespaces (default `personal`): entities, relations, memories with importance scoring.
 
-> **MANDATORY for Claude Code:** You have the MCP `instructions` field PLUS this file in `~/.claude/CLAUDE.md`. Both say the same thing — `search` first, persist after. Do not wait to be invoked via `/sepia`. Your first tool call on any meaningful task MUST be `search`.
+> **MANDATORY for OpenCode:** Sepia is your first tool. OpenCode sessions are short — without `search` you lose 100% of cross-session context. Skipping memory = hallucinating.
 
 ### Workflow (do this every session)
 
